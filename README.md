@@ -67,7 +67,7 @@ result to stdout.
 Clone the repository.
 
 ```
-$ git clone https://github.com/frgossen/vecgl
+$ git clone git@github.com:frgossen/vecgl.git
 $ cd vecgl
 ```
 
