@@ -11,7 +11,7 @@ from vecgl.linalg import (
 from vecgl.model import get_sphere_model
 from vecgl.rendering import render
 
-# Get a predefined shere model and choose nice colors.
+# Get a predefined sphere model and choose nice colors.
 # The sphere will span from -1.0 to 1.0 in all dimensions.
 sphere = get_sphere_model(16, 32, "lightblue", "black")
 

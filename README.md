@@ -1,8 +1,8 @@
 # VecGL
 
-__*VecGL* is 3D rendering engine with vector output.__
+__*VecGL* is a 3D rendering engine with vector output.__
 It is inspired by OpenGL with the key difference that the rendering result is a
-set of points, lines, and triangles -- not a pixelated image. These geometric
+set of points, lines, and triangles - not a pixelated image. These geometric
 primitives can be used to generate vector graphics or to drive
 [pen plotters](https://www.generativehut.com/post/axidraw).
 
@@ -14,7 +14,7 @@ The VecGL package is available through `pip`.
 $ python3 -m pip install vecgl
 ```
 
-Let's create and render a simple model. 
+Let's create and render a simple model.
 Here's the complete example for a sphere.
 
 ```py
@@ -31,7 +31,7 @@ from vecgl.linalg import (
 from vecgl.model import get_sphere_model
 from vecgl.rendering import render
 
-# Get a predefined shere model and choose nice colors.
+# Get a predefined sphere model and choose nice colors.
 # The sphere will span from -1.0 to 1.0 in all dimensions.
 sphere = get_sphere_model(16, 32, "lightblue", "black")
 
@@ -84,7 +84,7 @@ Install all requirements in the virtual environment.
 $ python3 -m pip install -r requirements.txt
 ```
 
-Intsall the `vecgl` package in editable mode. 
+Install the `vecgl` package in editable mode.
 This makes the package (and your changes) available when running the tests.
 
 ```
