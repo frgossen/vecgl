@@ -81,25 +81,25 @@ def to_svg(
     # Transform to canvas space.
     model = model.transform(get_viewport_mat4(0.0, height, width, -height))
 
-    yield f"<svg version='1.1' width='{width}' height='{height}' xmlns='http://www.w3.org/2000/svg'>\n"
+    yield f"<svg version=\"1.1\" width=\"{width}\" height=\"{height}\" xmlns=\"http://www.w3.org/2000/svg\">\n"
 
     # Add the triangles.
     for tr in model.triangles:
         px, py, _ = to_vec3(tr.p)
         qx, qy, _ = to_vec3(tr.q)
         rx, ry, _ = to_vec3(tr.r)
-        yield f"  <polygon points='{px},{py} {qx},{qy} {rx},{ry}' fill='{tr.color}'/>\n"
+        yield f"  <polygon points=\"{px},{py} {qx},{qy} {rx},{ry}\" fill=\"{tr.color}\"/>\n"
 
     # Add the lines.
     for ln in model.lines:
         px, py, _ = to_vec3(ln.p)
         qx, qy, _ = to_vec3(ln.q)
-        yield f"  <line x1='{px}' y1='{py}' x2='{qx}' y2='{qy}' stroke='{ln.color}' stroke-linecap='round' stroke-width='{stroke_width}'/>\n"
+        yield f"  <line x1=\"{px}\" y1=\"{py}\" x2=\"{qx}\" y2=\"{qy}\" stroke=\"{ln.color}\" stroke-linecap=\"round\" stroke-width=\"{stroke_width}\"/>\n"
 
     # Add the points.
     for pt in model.points:
         px, py, _ = to_vec3(pt.p)
-        yield f"  <circle cx='{px}' cy='{py}' r='{stroke_width/2}' fill='green'/>\n"
+        yield f"  <circle cx=\"{px}\" cy=\"{py}\" r=\"{stroke_width/2}\" fill=\"green\"/>\n"
 
     yield f"</svg>\n"
 
@@ -115,42 +115,43 @@ def write_svg(
         fout.writelines(to_svg(model, width, height, stroke_width))
 
 
-def to_json(model: Model) -> Iterable[str]:
-    def p_to_json(p: Vec4):
-        return "[ " + ", ".join(str(a) for a in p) + " ]"
+def _p_to_json(p: Vec4) -> str:
+    return "[ " + ", ".join(str(a) for a in p) + " ]"
 
+
+def to_json(model: Model) -> Iterable[str]:
     yield "{\n"
 
     # Add the points.
-    yield '  "points": [\n'
+    yield "  \"points\": [\n"
     for pt in model.points:
         is_last = pt == model.points[-1]
         yield f"    {{\n"
-        yield f'      "p": {p_to_json(pt.p)},\n'
-        yield f'      "color": "{pt.color}"\n'
+        yield f"      \"p\": {_p_to_json(pt.p)},\n"
+        yield f"      \"color\": \"{pt.color}\"\n"
         yield f"    }}{'' if is_last else ','}\n"
     yield "  ],\n"
 
     # Add the lines.
-    yield '  "lines": [\n'
+    yield "  \"lines\": [\n"
     for ln in model.lines:
         is_last = ln == model.lines[-1]
         yield f"    {{\n"
-        yield f'      "p": {p_to_json(ln.p)},\n'
-        yield f'      "q": {p_to_json(ln.q)},\n'
-        yield f'      "color": "{ln.color}"\n'
+        yield f"      \"p\": {_p_to_json(ln.p)},\n"
+        yield f"      \"q\": {_p_to_json(ln.q)},\n"
+        yield f"      \"color\": \"{ln.color}\"\n"
         yield f"    }}{'' if is_last else ','}\n"
     yield "  ],\n"
 
     # Add the triangles.
-    yield '  "triangles": [\n'
+    yield "  \"triangles\": [\n"
     for tr in model.triangles:
         is_last = tr == model.triangles[-1]
         yield f"    {{\n"
-        yield f'      "p": {p_to_json(tr.p)},\n'
-        yield f'      "q": {p_to_json(tr.q)},\n'
-        yield f'      "r": {p_to_json(tr.r)},\n'
-        yield f'      "color": "{tr.color}"\n'
+        yield f"      \"p\": {_p_to_json(tr.p)},\n"
+        yield f"      \"q\": {_p_to_json(tr.q)},\n"
+        yield f"      \"r\": {_p_to_json(tr.r)},\n"
+        yield f"      \"color\": \"{tr.color}\"\n"
         yield f"    }}{'' if is_last else ','}\n"
     yield "  ]\n"
 
