@@ -1,6 +1,6 @@
 from functools import reduce
 from math import acos, copysign, cos, inf, sin, sqrt
-import operator
+from operator import add, sub
 from typing import Callable, List, Tuple, Union
 
 Vec2 = Tuple[float, float]
@@ -66,11 +66,11 @@ def scale_vec2(a: float, u: Vec2) -> Vec2:
 
 
 def add_vec2(*us: Vec2) -> Vec2:
-    return _cwise_nary_vec2(operator.add, *us)
+    return _cwise_nary_vec2(add, *us)
 
 
 def sub_vec2(*us: Vec2) -> Vec2:
-    return _cwise_nary_vec2(operator.sub, *us)
+    return _cwise_nary_vec2(sub, *us)
 
 
 def dot_vec2(u: Vec2, v: Vec2) -> float:
@@ -174,11 +174,11 @@ def scale_vec3(a: float, u: Vec3) -> Vec3:
 
 
 def add_vec3(*us: Vec3) -> Vec3:
-    return _cwise_nary_vec3(operator.add, *us)
+    return _cwise_nary_vec3(add, *us)
 
 
 def sub_vec3(*us: Vec3) -> Vec3:
-    return _cwise_nary_vec3(operator.sub, *us)
+    return _cwise_nary_vec3(sub, *us)
 
 
 def dot_vec3(u: Vec3, v: Vec3) -> float:

@@ -1,3 +1,4 @@
+from math import isnan
 from random import uniform
 
 from vecgl.linalg import (
@@ -186,6 +187,19 @@ def test_render_line_through_triangle_ccw():
     rendered = render(model)
     assert len(rendered.lines) == 2
     assert len(rendered.triangles) == 1
+
+
+def test_render_in_focal_point():
+    model = Model()
+    model.add_line((0.0, 0.0, 0.0), (0.0, 1.0, 0.0))
+    projection_mat4 = get_frustum_mat4(-1.0, 1.0, -1.0, 1.0, 1.0, 100.0)
+    cube_in_ndc = model.transform(projection_mat4)
+    rendered = render(cube_in_ndc)
+    assert len(rendered.lines) == 1
+    px, py, pz, pw = rendered.lines[0].p
+    qx, qy, qz, qw = rendered.lines[0].q
+    assert isnan(px) and isnan(py) and isnan(pz) and pw == 1.0
+    assert isnan(qx) and isnan(qy) and isnan(qz) and qw == 1.0
 
 
 def test_render_model():
