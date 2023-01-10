@@ -1,10 +1,10 @@
 from math import cos, pi, sin, sqrt
-from typing import List, Union
+from typing import Iterable, List, Union
 
 from vecgl.linalg import Mat4, Vec3, Vec4, mul_mat4_vec4, str_vec4, to_vec4
 
 
-kDefaultSurfaceColor = "gray"
+kDefaultSurfaceColor = "lightgray"
 kDefaultLineColor = "black"
 
 
@@ -13,11 +13,11 @@ class Point:
         self.p = to_vec4(p)
         self.color = color
 
-    def transform(self, U: Mat4):
+    def transform(self, U: Mat4) -> "Point":
         transformed_p = mul_mat4_vec4(U, self.p)
         return Point(transformed_p, self.color)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str_vec4(self.p)
 
 
@@ -27,12 +27,12 @@ class Line:
         self.q = to_vec4(q)
         self.color = color
 
-    def transform(self, U: Mat4):
+    def transform(self, U: Mat4) -> "Line":
         transformed_p = mul_mat4_vec4(U, self.p)
         transformed_q = mul_mat4_vec4(U, self.q)
         return Line(transformed_p, transformed_q, self.color)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{str_vec4(self.p)} to {str_vec4(self.q)}"
 
 
@@ -49,13 +49,13 @@ class Triangle:
         self.r = to_vec4(r)
         self.color = color
 
-    def transform(self, U: Mat4):
+    def transform(self, U: Mat4) -> "Triangle":
         transformed_p = mul_mat4_vec4(U, self.p)
         transformed_q = mul_mat4_vec4(U, self.q)
         transformed_r = mul_mat4_vec4(U, self.r)
         return Triangle(transformed_p, transformed_q, transformed_r, self.color)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{str_vec4(self.p)}, {str_vec4(self.q)}, {str_vec4(self.r)}"
 
 
@@ -74,6 +74,13 @@ class Model:
     ):
         self.lines.append(Line(p, q, color))
 
+    def add_line_chain(self, ps: Iterable[Union[Vec3, Vec4]], color: str = kDefaultLineColor):
+        p = None
+        for q in ps:
+            if p is not None:
+                self.lines.append(Line(p, q, color))
+            p = q
+
     def add_triangle(
         self,
         p: Union[Vec3, Vec4],
@@ -82,6 +89,14 @@ class Model:
         color: str = kDefaultSurfaceColor,
     ):
         self.triangles.append(Triangle(p, q, r, color))
+
+    def add_triangle_strip(self, ps: Iterable[Union[Vec3, Vec4]], color: str = kDefaultSurfaceColor):
+        p, q = None, None
+        for r in ps:
+            if p is not None and q is not None:
+                self.add_triangle(p, q, r, color)
+            p = q
+            q = r
 
     def add_model(self, model: "Model"):
         self.points += model.points
