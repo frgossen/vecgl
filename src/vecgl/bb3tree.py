@@ -38,7 +38,7 @@ class BB3Tree:
         self.rhs = rhs
         self.elem = elem
 
-    def find(self, query: BoundingBox3) -> Generator[Any]:
+    def find(self, query: BoundingBox3) -> Iterator[Any]:
         if self.bbox == None or self.bbox.intersect(query).empty():
             return
         if self.elem is not None:
