@@ -1,4 +1,4 @@
-from typing import Any, Callable, Iterator, List, Optional, Tuple
+from typing import Any, Callable, Iterable, Iterator, List, Optional, Tuple
 
 from vecgl.linalg import Vec3, max_vec3, min_vec3
 
@@ -38,7 +38,7 @@ class BB3Tree:
         self.rhs = rhs
         self.elem = elem
 
-    def find(self, query: BoundingBox3) -> Iterator[Any]:
+    def find(self, query: BoundingBox3) -> Generator[Any]:
         if self.bbox == None or self.bbox.intersect(query).empty():
             return
         if self.elem is not None:
@@ -80,7 +80,7 @@ def _create_bb3tree_recusrively(
     return BB3Tree(surrounding_bbox, lhs, rhs, None)
 
 
-def create_bb3tree(elems: List[Any], fn_bbox3: Callable[[Any], BoundingBox3]):
+def create_bb3tree(elems: Iterable[Any], fn_bbox3: Callable[[Any], BoundingBox3]):
     pairs = [(fn_bbox3(e), e) for e in elems]
     initial_split_dim = 0
     return _create_bb3tree_recusrively(pairs, initial_split_dim)
