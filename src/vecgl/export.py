@@ -1,3 +1,4 @@
+from math import isnan
 from tkinter import ROUND, Canvas, Tk
 from typing import Iterable
 
@@ -32,36 +33,26 @@ def show(
         px, py, _ = to_vec3(tr.p)
         qx, qy, _ = to_vec3(tr.q)
         rx, ry, _ = to_vec3(tr.r)
-        canvas.create_polygon([px, py, qx, qy, rx, ry], fill=tr.color)
+        coords = px, py, qx, qy, rx, ry
+        if not any(isnan(c) for c in coords):
+            canvas.create_polygon(coords, fill=tr.color)
 
     # Draw the lines fragments, which are fully visible.
     for ln in model.lines:
         px, py, _ = to_vec3(ln.p)
         qx, qy, _ = to_vec3(ln.q)
-        canvas.create_line(
-            px,
-            py,
-            qx,
-            qy,
-            width=stroke_width,
-            fill=ln.color,
-            capstyle=ROUND,
-            joinstyle=ROUND,
-        )
+        coords = px, py, qx, qy
+        if not any(isnan(c) for c in coords):
+            canvas.create_line(*coords, width=stroke_width,
+                               fill=ln.color, capstyle=ROUND, joinstyle=ROUND)
 
     # Draw the points, which are fully visible.
     for pt in model.points:
         px, py, _ = to_vec3(pt.p)
-        canvas.create_line(
-            px,
-            py,
-            px,
-            py,
-            width=stroke_width,
-            fill=pt.color,
-            capstyle=ROUND,
-            joinstyle=ROUND,
-        )
+        coords = px, py
+        if not any(isnan(c) for c in coords):
+            canvas.create_line(*coords, *coords, width=stroke_width,
+                               fill=pt.color, capstyle=ROUND, joinstyle=ROUND)
 
     # Display the hard work.
     canvas.pack()
