@@ -4,6 +4,7 @@ from vecgl.bb3tree import BB3Tree, BoundingBox3, create_bb3tree
 from vecgl.linalg import (
     Vec3,
     add_vec3,
+    kDefaultEps,
     cross_vec3,
     dot_vec3,
     max_vec3,
@@ -19,9 +20,6 @@ from vecgl.model import Line, Model, Point, Triangle
 
 Plane3 = Tuple[Vec3, Vec3]
 Volume3 = Tuple[Plane3]
-
-
-kDefaultEps = 0.000000001
 
 
 def _get_clipping_space_volume() -> Volume3:
@@ -248,7 +246,7 @@ def _get_line_bbox(ln: Line) -> BoundingBox3:
 
 def _get_visible_line_fragments(
     lines: List[Line], triangle_tree: BB3Tree
-) -> List[Line]:
+) -> Iterable[Line]:
 
     # Find visible line fragments wrt. clipping space.
     line_fragments_in_clipping_space: List[Line] = []
@@ -258,21 +256,20 @@ def _get_visible_line_fragments(
             line_fragments_in_clipping_space.append(ln_fragment)
 
     # Find visible line fragments within clipping space.
-    visible_line_fragments: List[Line] = []
     worklist = line_fragments_in_clipping_space
-    while len(worklist) > 0:
+    while worklist:
         ln = worklist.pop()
         triangle_query = _get_triangle_query(_get_line_bbox(ln))
         is_fully_visible = True
         for tr in triangle_tree.find(triangle_query):
-            intersects, ln_fragments = _get_visible_line_fragments_wrt_triangle(ln, tr)
+            intersects, ln_fragments = _get_visible_line_fragments_wrt_triangle(
+                ln, tr)
             if intersects:
                 worklist.extend(ln_fragments)
                 is_fully_visible = False
                 break
         if is_fully_visible:
-            visible_line_fragments.append(ln)
-    return visible_line_fragments
+            yield ln
 
 
 def _get_triangle_bbox(tr: Triangle) -> BoundingBox3:
@@ -289,7 +286,8 @@ def render(model: Model) -> Model:
     rendered = Model()
     triangle_tree = create_bb3tree(model.triangles, _get_triangle_bbox)
     rendered.points = list(_get_visible_points(model.points, triangle_tree))
-    rendered.lines = _get_visible_line_fragments(model.lines, triangle_tree)
+    rendered.lines = list(
+        _get_visible_line_fragments(model.lines, triangle_tree))
     rendered.triangles = model.triangles  # Not yet implemented.
     rendered.rendered = True
     return rendered
