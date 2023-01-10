@@ -6,8 +6,8 @@ def test_to_svg():
     model = Model()
     model.add_point((0.5, 1.0, 0.0), "red")
     model.add_line((-1.0, 0.0, 0.0), (1.0, 1.0, 0.0), "green")
-    model.add_triangle((-1.0, -1.0, 0.0), (1.0, -1.0, 0.0),
-                       (-1.0, 1.0, 0.0), "blue")
+    model.add_triangle((-1.0, -1.0, 0.0), (1.0, -1.0, 0.0), (-1.0, 1.0, 0.0),
+                       "blue")
     model.add_point((-0.5, -0.5, 0.5), "hidden")
     expected = [
         "<svg version=\"1.1\" width=\"300\" height=\"400\" xmlns=\"http://www.w3.org/2000/svg\">\n",
@@ -24,8 +24,8 @@ def test_to_json():
     model = Model()
     model.add_point((0.5, 1.0, 0.0), "red")
     model.add_line((-1.0, 0.0, 0.0), (1.0, 1.0, 0.0), "green")
-    model.add_triangle((-1.0, -1.0, 0.0), (1.0, -1.0, 0.0),
-                       (-1.0, 1.0, 0.0), "blue")
+    model.add_triangle((-1.0, -1.0, 0.0), (1.0, -1.0, 0.0), (-1.0, 1.0, 0.0),
+                       "blue")
     model.add_point((-0.5, -0.5, 0.5), "hidden")
     expected = [
         "{\n",

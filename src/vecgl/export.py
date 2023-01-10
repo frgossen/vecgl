@@ -43,16 +43,23 @@ def show(
         qx, qy, _ = to_vec3(ln.q)
         coords = px, py, qx, qy
         if not any(isnan(c) for c in coords):
-            canvas.create_line(*coords, width=stroke_width,
-                               fill=ln.color, capstyle=ROUND, joinstyle=ROUND)
+            canvas.create_line(*coords,
+                               width=stroke_width,
+                               fill=ln.color,
+                               capstyle=ROUND,
+                               joinstyle=ROUND)
 
     # Draw the points, which are fully visible.
     for pt in model.points:
         px, py, _ = to_vec3(pt.p)
         coords = px, py
         if not any(isnan(c) for c in coords):
-            canvas.create_line(*coords, *coords, width=stroke_width,
-                               fill=pt.color, capstyle=ROUND, joinstyle=ROUND)
+            canvas.create_line(*coords,
+                               *coords,
+                               width=stroke_width,
+                               fill=pt.color,
+                               capstyle=ROUND,
+                               joinstyle=ROUND)
 
     # Display the hard work.
     canvas.pack()

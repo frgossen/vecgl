@@ -10,9 +10,7 @@ Mat2 = Tuple[Vec2, Vec2]
 Mat3 = Tuple[Vec3, Vec3, Vec3]
 Mat4 = Tuple[Vec4, Vec4, Vec4, Vec4]
 
-
 kDefaultEps = 0.000000001
-
 
 # 2D cartesian coordinates.
 
@@ -54,7 +52,7 @@ def uniform_vec2(a: float) -> Vec2:
 def is_eps_eq_vec2(u: Vec2, v: Vec2, eps: float = kDefaultEps):
     ux, uy = u
     vx, vy = v
-    return abs(ux-vx) < eps and abs(uy-vy) < eps
+    return abs(ux - vx) < eps and abs(uy - vy) < eps
 
 
 def is_null_vec2(u: Vec2, eps: float = kDefaultEps) -> bool:
@@ -62,7 +60,7 @@ def is_null_vec2(u: Vec2, eps: float = kDefaultEps) -> bool:
 
 
 def scale_vec2(a: float, u: Vec2) -> Vec2:
-    return _cwise_unary_vec2(lambda ui: a*ui, u)
+    return _cwise_unary_vec2(lambda ui: a * ui, u)
 
 
 def add_vec2(*us: Vec2) -> Vec2:
@@ -162,7 +160,7 @@ def uniform_vec3(a: float) -> Vec3:
 def is_eps_eq_vec3(u: Vec3, v: Vec3, eps: float = kDefaultEps):
     ux, uy, uz = u
     vx, vy, vz = v
-    return abs(ux-vx) < eps and abs(uy-vy) < eps and abs(uz-vz) < eps
+    return abs(ux - vx) < eps and abs(uy - vy) < eps and abs(uz - vz) < eps
 
 
 def is_null_vec3(u: Vec3, eps: float = kDefaultEps) -> bool:
@@ -339,7 +337,8 @@ def get_rotate_z_mat4(da: float) -> Mat4:
     )
 
 
-def get_ortho_mat4(l: float, r: float, b: float, t: float, n: float, f: float) -> Mat4:
+def get_ortho_mat4(l: float, r: float, b: float, t: float, n: float,
+                   f: float) -> Mat4:
     return (
         (2.0 / (r - l), 0.0, 0.0, -(r + l) / (r - l)),
         (0.0, 2.0 / (t - b), 0.0, -(t + b) / (t - b)),
@@ -348,9 +347,8 @@ def get_ortho_mat4(l: float, r: float, b: float, t: float, n: float, f: float) -
     )
 
 
-def get_frustum_mat4(
-    l: float, r: float, b: float, t: float, n: float, f: float
-) -> Mat4:
+def get_frustum_mat4(l: float, r: float, b: float, t: float, n: float,
+                     f: float) -> Mat4:
     return (
         (2.0 * n / (r - l), 0.0, (r + l) / (r - l), 0.0),
         (0.0, 2.0 * n / (t - b), (t + b) / (t - b), 0.0),

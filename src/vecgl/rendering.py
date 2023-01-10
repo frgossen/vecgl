@@ -76,9 +76,10 @@ def _get_plane_side(pl: Plane3, q: Vec3) -> float:
     return dot_vec3(pq, n)
 
 
-def _get_plane_line_intersection(
-    pl: Plane3, q: Vec3, r: Vec3, eps: float = kDefaultEps
-) -> Optional[float]:
+def _get_plane_line_intersection(pl: Plane3,
+                                 q: Vec3,
+                                 r: Vec3,
+                                 eps: float = kDefaultEps) -> Optional[float]:
     p, n = pl
     qr = sub_vec3(r, q)
     qp = sub_vec3(p, q)
@@ -99,7 +100,8 @@ def _get_triangle_query(bb: BoundingBox3) -> BoundingBox3:
     return BoundingBox3(query_lb, query_ub)
 
 
-def _is_point_visible_wrt_clipping_space(pt: Point, eps: float = kDefaultEps) -> bool:
+def _is_point_visible_wrt_clipping_space(pt: Point,
+                                         eps: float = kDefaultEps) -> bool:
 
     # Do this in non-homogenious coordinates.
     p = to_vec3(pt.p)
@@ -114,9 +116,9 @@ def _is_point_visible_wrt_clipping_space(pt: Point, eps: float = kDefaultEps) ->
     return True
 
 
-def _is_point_visible_wrt_triangle(
-    pt: Point, tr: Triangle, eps: float = kDefaultEps
-) -> bool:
+def _is_point_visible_wrt_triangle(pt: Point,
+                                   tr: Triangle,
+                                   eps: float = kDefaultEps) -> bool:
 
     # Do this in non-homogenious coordinates.
     p = to_vec3(pt.p)
@@ -137,9 +139,8 @@ def _get_point_bbox(pt: Point) -> BoundingBox3:
     return BoundingBox3(p, p)
 
 
-def _get_visible_points(
-    points: Iterable[Point], triangle_tree: BB3Tree
-) -> Iterable[Point]:
+def _get_visible_points(points: Iterable[Point],
+                        triangle_tree: BB3Tree) -> Iterable[Point]:
     for pt in points:
         if not _is_point_visible_wrt_clipping_space(pt):
             continue
@@ -151,8 +152,10 @@ def _get_visible_points(
 
 
 def _get_line_fragments_outside_convex_volume(
-    ln: Line, boundary_planes: Volume3, inverted: bool = False, eps: float = kDefaultEps
-) -> Tuple[bool, List[Line]]:
+        ln: Line,
+        boundary_planes: Volume3,
+        inverted: bool = False,
+        eps: float = kDefaultEps) -> Tuple[bool, List[Line]]:
 
     # Do this in non-homogenious coordinates.
     p, q = to_vec3(ln.p), to_vec3(ln.q)
@@ -219,8 +222,7 @@ def _get_line_fragments_outside_convex_volume(
 def _get_visible_line_fragment_wrt_clipping_space(ln: Line) -> Optional[Line]:
     boundary_planes = _get_clipping_space_volume()
     _, line_fragments = _get_line_fragments_outside_convex_volume(
-        ln, boundary_planes, inverted=True
-    )
+        ln, boundary_planes, inverted=True)
     assert len(line_fragments) <= 1
     if len(line_fragments) == 1:
         return line_fragments[0]
@@ -228,10 +230,12 @@ def _get_visible_line_fragment_wrt_clipping_space(ln: Line) -> Optional[Line]:
 
 
 def _get_visible_line_fragments_wrt_triangle(
-    ln: Line, tr: Triangle, eps: float = kDefaultEps
-) -> Tuple[bool, List[Line]]:
+        ln: Line,
+        tr: Triangle,
+        eps: float = kDefaultEps) -> Tuple[bool, List[Line]]:
     boundary_planes = _get_covered_triangle_volume(tr)
-    return _get_line_fragments_outside_convex_volume(ln, boundary_planes, False, eps)
+    return _get_line_fragments_outside_convex_volume(ln, boundary_planes,
+                                                     False, eps)
 
 
 def _get_line_bbox(ln: Line) -> BoundingBox3:
@@ -244,9 +248,8 @@ def _get_line_bbox(ln: Line) -> BoundingBox3:
     return BoundingBox3(lb, ub)
 
 
-def _get_visible_line_fragments(
-    lines: List[Line], triangle_tree: BB3Tree
-) -> Iterable[Line]:
+def _get_visible_line_fragments(lines: List[Line],
+                                triangle_tree: BB3Tree) -> Iterable[Line]:
 
     # Find visible line fragments wrt. clipping space.
     line_fragments_in_clipping_space: List[Line] = []

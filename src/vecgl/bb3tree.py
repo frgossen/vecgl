@@ -4,6 +4,7 @@ from vecgl.linalg import Vec3, max_vec3, min_vec3
 
 
 class BoundingBox3:
+
     def __init__(self, lb: Vec3, ub: Vec3):
         self.lb = lb
         self.ub = ub
@@ -26,6 +27,7 @@ class BoundingBox3:
 
 
 class BB3Tree:
+
     def __init__(
         self,
         bbox: Optional[BoundingBox3],
@@ -49,9 +51,8 @@ class BB3Tree:
             yield from self.rhs.find(query)
 
 
-def _create_bb3tree_recusrively(
-    pairs: List[Tuple[BoundingBox3, Any]], split_dim: int
-) -> BB3Tree:
+def _create_bb3tree_recusrively(pairs: List[Tuple[BoundingBox3, Any]],
+                                split_dim: int) -> BB3Tree:
 
     # Empty case.
     if len(pairs) == 0:
@@ -80,7 +81,8 @@ def _create_bb3tree_recusrively(
     return BB3Tree(surrounding_bbox, lhs, rhs, None)
 
 
-def create_bb3tree(elems: Iterable[Any], fn_bbox3: Callable[[Any], BoundingBox3]):
+def create_bb3tree(elems: Iterable[Any], fn_bbox3: Callable[[Any],
+                                                            BoundingBox3]):
     pairs = [(fn_bbox3(e), e) for e in elems]
     initial_split_dim = 0
     return _create_bb3tree_recusrively(pairs, initial_split_dim)

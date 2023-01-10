@@ -45,8 +45,8 @@ def test_render_random_points():
 
 def test_render_point_behind_triangle():
     model = Model()
-    model.add_triangle((0.0, 0.0, 0.0), (1.0, 0.0, 0.0),
-                       (0.0, 1.0, 0.0), "red")
+    model.add_triangle((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0),
+                       "red")
     model.add_point((0.25, 0.25, 1.0), "green")
     rendered = render(model)
     assert len(rendered.points) == 0
@@ -55,8 +55,8 @@ def test_render_point_behind_triangle():
 
 def test_render_point_in_front_of_triangle():
     model = Model()
-    model.add_triangle((0.0, 0.0, 0.0), (1.0, 0.0, 0.0),
-                       (0.0, 1.0, 0.0), "red")
+    model.add_triangle((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0),
+                       "red")
     model.add_point((0.25, 0.25, -1.0), "green")
     rendered = render(model)
     assert len(rendered.points) == 1
@@ -65,8 +65,8 @@ def test_render_point_in_front_of_triangle():
 
 def test_render_point_next_to_triangle():
     model = Model()
-    model.add_triangle((0.0, 0.0, 0.0), (1.0, 0.0, 0.0),
-                       (0.0, 1.0, 0.0), "red")
+    model.add_triangle((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0),
+                       "red")
     model.add_point((-0.5, 0.5, 0.0), "green")
     rendered = render(model)
     assert len(rendered.points) == 1
@@ -75,8 +75,8 @@ def test_render_point_next_to_triangle():
 
 def test_render_point_on_triangle():
     model = Model()
-    model.add_triangle((0.0, 0.0, 0.0), (1.0, 0.0, 0.0),
-                       (0.0, 1.0, 0.0), "red")
+    model.add_triangle((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0),
+                       "red")
     model.add_point((0.2, 0.2, 0.0), "green")
     rendered = render(model)
     assert len(rendered.points) == 1
@@ -85,8 +85,8 @@ def test_render_point_on_triangle():
 
 def test_render_point_on_triangle_edge():
     model = Model()
-    model.add_triangle((0.0, 0.0, 0.0), (1.0, 0.0, 0.0),
-                       (0.0, 1.0, 0.0), "red")
+    model.add_triangle((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0),
+                       "red")
     model.add_point((0.5, 0.5, 0.0), "green")
     rendered = render(model)
     assert len(rendered.points) == 1
@@ -121,8 +121,8 @@ def test_render_random_lines():
 
 def test_render_line_behind_triangle():
     model = Model()
-    model.add_triangle((0.0, 0.0, 0.0), (0.0, 1.0, 0.0),
-                       (1.0, 0.0, 0.0), "red")
+    model.add_triangle((0.0, 0.0, 0.0), (0.0, 1.0, 0.0), (1.0, 0.0, 0.0),
+                       "red")
     model.add_line((-1.0, -1.0, 1.0), (1.0, 1.0, 0.5), "green")
     rendered = render(model)
     assert len(rendered.lines) == 2
@@ -131,8 +131,8 @@ def test_render_line_behind_triangle():
 
 def test_render_line_in_front_of_triangle():
     model = Model()
-    model.add_triangle((0.0, 0.0, 0.0), (1.0, 0.0, 0.0),
-                       (0.0, 1.0, 0.0), "red")
+    model.add_triangle((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0),
+                       "red")
     model.add_line((-1.0, -1.0, -0.5), (1.0, 1.0, -1.0), "green")
     rendered = render(model)
     assert len(rendered.lines) == 1
@@ -141,8 +141,8 @@ def test_render_line_in_front_of_triangle():
 
 def test_render_line_next_to_triangle():
     model = Model()
-    model.add_triangle((0.0, 0.0, 0.0), (1.0, 0.0, 0.0),
-                       (0.0, 1.0, 0.0), "red")
+    model.add_triangle((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0),
+                       "red")
     model.add_line((-1.0, 0.0, 0.0), (0.0, -1.0, 0.0), "green")
     rendered = render(model)
     assert len(rendered.lines) == 1
@@ -151,8 +151,8 @@ def test_render_line_next_to_triangle():
 
 def test_render_line_on_triangle():
     model = Model()
-    model.add_triangle((0.0, 0.0, 0.0), (1.0, 0.0, 0.0),
-                       (0.0, 1.0, 0.0), "red")
+    model.add_triangle((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0),
+                       "red")
     model.add_line((0.0, 0.0, 0.0), (0.5, 0.5, 0.0), "green")
     rendered = render(model)
     assert len(rendered.lines) == 1
@@ -161,8 +161,8 @@ def test_render_line_on_triangle():
 
 def test_render_line_on_triangle_edge():
     model = Model()
-    model.add_triangle((0.0, 0.0, 0.0), (1.0, 0.0, 0.0),
-                       (0.0, 1.0, 0.0), "red")
+    model.add_triangle((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0),
+                       "red")
     model.add_line((1.0, 0.0, 0.0), (0.0, 1.0, 0.0), "green")
     rendered = render(model)
     assert len(rendered.lines) == 1
@@ -171,8 +171,8 @@ def test_render_line_on_triangle_edge():
 
 def test_render_line_through_triangle_cw():
     model = Model()
-    model.add_triangle((0.0, 0.0, 0.0), (1.0, 0.0, 0.0),
-                       (0.0, 1.0, 0.0), "red")
+    model.add_triangle((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0),
+                       "red")
     model.add_line((-0.5, -0.5, 1.0), (1.0, 1.0, -1.0), "green")
     rendered = render(model)
     assert len(rendered.lines) == 2
@@ -181,8 +181,8 @@ def test_render_line_through_triangle_cw():
 
 def test_render_line_through_triangle_ccw():
     model = Model()
-    model.add_triangle((0.0, 0.0, 0.0), (0.0, 1.0, 0.0),
-                       (1.0, 0.0, 0.0), "red")
+    model.add_triangle((0.0, 0.0, 0.0), (0.0, 1.0, 0.0), (1.0, 0.0, 0.0),
+                       "red")
     model.add_line((1.0, 1.0, -1.0), (-0.5, -0.5, 1.0), "green")
     rendered = render(model)
     assert len(rendered.lines) == 2
@@ -204,8 +204,8 @@ def test_render_in_focal_point():
 
 def test_render_model():
     model = get_cube_model()
-    view_mat4 = mul_mat4(get_translate_mat4(
-        0.0, 0.0, -3.0), get_rotate_y_mat4(0.5))
+    view_mat4 = mul_mat4(get_translate_mat4(0.0, 0.0, -3.0),
+                         get_rotate_y_mat4(0.5))
     projection_mat4 = get_frustum_mat4(-1.0, 1.0, -1.0, 1.0, 1.0, 100.0)
     model_in_ndc = model.transform(mul_mat4(projection_mat4, view_mat4))
     rendered = render(model_in_ndc)
