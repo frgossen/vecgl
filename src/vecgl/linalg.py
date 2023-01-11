@@ -10,7 +10,7 @@ Mat2 = Tuple[Vec2, Vec2]
 Mat3 = Tuple[Vec3, Vec3, Vec3]
 Mat4 = Tuple[Vec4, Vec4, Vec4, Vec4]
 
-kDefaultEps = 0.000000001
+kDefaultEps = 0.00001
 
 # 2D cartesian coordinates.
 

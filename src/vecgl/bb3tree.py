@@ -25,6 +25,9 @@ class BoundingBox3:
                 return True
         return False
 
+    def __str__(self) -> str:
+        return f"{self.lb} to {self.ub}"
+
 
 class BB3Tree:
 

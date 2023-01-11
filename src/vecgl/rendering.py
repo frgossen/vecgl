@@ -1,3 +1,4 @@
+from math import isnan
 from typing import Iterable, List, Optional, Tuple
 
 from vecgl.bb3tree import BB3Tree, BoundingBox3, create_bb3tree
@@ -9,9 +10,11 @@ from vecgl.linalg import (
     dot_vec3,
     max_vec3,
     min_vec3,
+    norm2_vec3,
     scale_vec3,
     sub_vec3,
     to_vec3,
+    unit_vec3,
     x_vec3,
     y_vec3,
     z_vec3,
@@ -38,6 +41,27 @@ def _get_clipping_space_volume() -> Volume3:
     return tuple(boundary_planes)
 
 
+def _get_triangle_normal(tr: Triangle) -> Vec3:
+    p, q, r = tr.p, tr.q, tr.r
+
+    # Do this in non-homogenious coordinates.
+    p = to_vec3(p)
+    q = to_vec3(q)
+    r = to_vec3(r)
+
+    pq = sub_vec3(q, p)
+    pr = sub_vec3(r, p)
+    n = cross_vec3(pq, pr)
+    return n
+
+
+def _get_eps_plane(pl: Plane3, eps: float) -> Plane3:
+    p, n = pl
+    n0 = unit_vec3(n)
+    p_eps = add_vec3(p, scale_vec3(eps, n0))
+    return p_eps, n
+
+
 def _get_covered_triangle_volume(tr: Triangle) -> Volume3:
     p, q, r = tr.p, tr.q, tr.r
 
@@ -46,26 +70,34 @@ def _get_covered_triangle_volume(tr: Triangle) -> Volume3:
     q = to_vec3(q)
     r = to_vec3(r)
 
-    # Get the triangle plane.
-    pq = sub_vec3(q, p)
-    pr = sub_vec3(r, p)
-    n = cross_vec3(pq, pr)
-
-    # Derive boundary plane.
-    # Ensure that normals point away from the covered volume.
+    # Collect the front boundary plane of the triangle.
+    # Ensure that the normal points away from the covered volume.
+    # Shrink the covered volume by eps not to cover elements that are precisely on the triangle, e.g. its edge lines.
+    n = _get_triangle_normal(tr)
     ccwise = -1.0 if z_vec3(n) > 0.0 else 1.0
     n = scale_vec3(ccwise, n)
-    boundary_planes = [(p, n)]
+    front_plane = p, n
+    eps_front_plane = _get_eps_plane(front_plane, -kDefaultEps)
+    boundary_planes = [eps_front_plane]
 
     # Collect the three remaining boundary planes per side of the triangle.
+    # Ensure that normals point away from the covered volume.
+    # Enlarge the covered colume by eps to cover elements behind the triangle edge, e.g elements in the gaps between triangles.
+    pq = sub_vec3(q, p)
     n_pq = -ccwise * y_vec3(pq), ccwise * x_vec3(pq), 0.0
-    boundary_planes.append((p, n_pq))
+    pq_plane = p, n_pq
+    eps_pq_plane = _get_eps_plane(pq_plane, kDefaultEps)
+    boundary_planes.append(eps_pq_plane)
     qr = sub_vec3(r, q)
     n_qr = -ccwise * y_vec3(qr), ccwise * x_vec3(qr), 0.0
-    boundary_planes.append((q, n_qr))
+    qr_plane = q, n_qr
+    eps_qr_plane = _get_eps_plane(qr_plane, kDefaultEps)
+    boundary_planes.append(eps_qr_plane)
     rp = sub_vec3(p, r)
     n_rp = -ccwise * y_vec3(rp), ccwise * x_vec3(rp), 0.0
-    boundary_planes.append((r, n_rp))
+    rp_plane = r, n_rp
+    eps_rp_plane = _get_eps_plane(rp_plane, kDefaultEps)
+    boundary_planes.append(eps_rp_plane)
 
     return tuple(boundary_planes)
 
@@ -76,15 +108,13 @@ def _get_plane_side(pl: Plane3, q: Vec3) -> float:
     return dot_vec3(pq, n)
 
 
-def _get_plane_line_intersection(pl: Plane3,
-                                 q: Vec3,
-                                 r: Vec3,
-                                 eps: float = kDefaultEps) -> Optional[float]:
+def _get_plane_line_intersection(pl: Plane3, q: Vec3,
+                                 r: Vec3) -> Optional[float]:
     p, n = pl
     qr = sub_vec3(r, q)
     qp = sub_vec3(p, q)
     denom = dot_vec3(qr, n)
-    if abs(denom) < eps:
+    if abs(denom) == 0.0:
         return None
     return dot_vec3(qp, n) / denom
 
@@ -100,25 +130,20 @@ def _get_triangle_query(bb: BoundingBox3) -> BoundingBox3:
     return BoundingBox3(query_lb, query_ub)
 
 
-def _is_point_visible_wrt_clipping_space(pt: Point,
-                                         eps: float = kDefaultEps) -> bool:
+def _is_point_visible_wrt_clipping_space(pt: Point) -> bool:
 
     # Do this in non-homogenious coordinates.
     p = to_vec3(pt.p)
 
     px, py, pz = p
-    lb = -1.0 - eps
-    if px < lb or py < lb or pz < lb:
+    if px < -1.0 or py < -1.0 or pz < -1.0:
         return False
-    ub = 1.0 + eps
-    if px > ub or py > ub or pz > ub:
+    if px > 1.0 or py > 1.0 or pz > 1.0:
         return False
     return True
 
 
-def _is_point_visible_wrt_triangle(pt: Point,
-                                   tr: Triangle,
-                                   eps: float = kDefaultEps) -> bool:
+def _is_point_visible_wrt_triangle(pt: Point, tr: Triangle) -> bool:
 
     # Do this in non-homogenious coordinates.
     p = to_vec3(pt.p)
@@ -126,7 +151,7 @@ def _is_point_visible_wrt_triangle(pt: Point,
     # If point is on or outside of any boundary plane then it is visible.
     boundary_planes = _get_covered_triangle_volume(tr)
     for pl in boundary_planes:
-        if _get_plane_side(pl, p) >= -eps:
+        if _get_plane_side(pl, p) > 0:
             return True
     return False
 
@@ -154,11 +179,18 @@ def _get_visible_points(points: Iterable[Point],
 def _get_line_fragments_outside_convex_volume(
         ln: Line,
         boundary_planes: Volume3,
-        inverted: bool = False,
-        eps: float = kDefaultEps) -> Tuple[bool, List[Line]]:
+        min_length: float,
+        inverted: bool = False) -> Tuple[bool, List[Line]]:
 
     # Do this in non-homogenious coordinates.
     p, q = to_vec3(ln.p), to_vec3(ln.q)
+
+    # Bail if the line is too short.
+    pq = sub_vec3(q, p)
+    pq_length = norm2_vec3(pq)
+    if p == q or pq_length < min_length:
+        intersects = False
+        return intersects, []
 
     # For convex volumes, the line fragments outside of the volume will be at
     # most two:
@@ -171,7 +203,6 @@ def _get_line_fragments_outside_convex_volume(
     tail_fragment_lb = 1.0
 
     # Find the complete line fragments by updating them per boundary plane.
-    pq = sub_vec3(q, p)
     for pl in boundary_planes:
         intersection = _get_plane_line_intersection(pl, p, q)
         if intersection is not None:
@@ -187,42 +218,48 @@ def _get_line_fragments_outside_convex_volume(
 
             # Line and boundary plane are parallel to each other. Return the
             # line unchanged if it is entirely outside of the volume.
-            is_outside_volume = _get_plane_side(pl, p) >= -eps
+            is_outside_volume = _get_plane_side(pl, p) > 0
             if is_outside_volume:
                 intersects = False
                 return intersects, [ln] if not inverted else []
 
     # If head and tail fragment are overlapping, the line does not intersect the
     # volume and we can return it as is.
-    if head_fragment_ub + eps >= tail_fragment_lb:
+    if head_fragment_ub >= tail_fragment_lb - kDefaultEps:
         intersects = False
         return intersects, [ln] if not inverted else []
 
     # Otherwise, the line and triangle intersect, resulting in up to two line
     # fragments.
+    lines = []
     intersects = True
-    lines: List[Line] = []
     if not inverted:
-        if head_fragment_ub >= eps:
+        if head_fragment_ub * pq_length >= min_length:
             head_fragment_q = _get_point_on_line(head_fragment_ub, p, q)
-            head_fragment = Line(p, head_fragment_q, ln.color)
-            lines.append(head_fragment)
-        if tail_fragment_lb <= 1.0 - eps:
+            if not p == head_fragment_q:
+                head_fragment = Line(p, head_fragment_q, ln.color)
+                lines.append(head_fragment)
+        if (1.0 - tail_fragment_lb) * pq_length >= min_length:
             tail_fragment_p = _get_point_on_line(tail_fragment_lb, p, q)
-            tail_fragment = Line(tail_fragment_p, q, ln.color)
-            lines.append(tail_fragment)
+            if not tail_fragment_p == q:
+                tail_fragment = Line(tail_fragment_p, q, ln.color)
+                lines.append(tail_fragment)
     else:
-        center_fragment_p = _get_point_on_line(head_fragment_ub, p, q)
-        center_fragment_q = _get_point_on_line(tail_fragment_lb, p, q)
-        center_fragment = Line(center_fragment_p, center_fragment_q, ln.color)
-        lines.append(center_fragment)
+        assert head_fragment_ub < tail_fragment_lb or isnan(
+            head_fragment_ub) or isnan(tail_fragment_lb)
+        if (tail_fragment_lb - head_fragment_ub) * pq_length >= min_length:
+            center_fragment_p = _get_point_on_line(head_fragment_ub, p, q)
+            center_fragment_q = _get_point_on_line(tail_fragment_lb, p, q)
+            center_fragment = Line(center_fragment_p, center_fragment_q,
+                                   ln.color)
+            lines.append(center_fragment)
     return intersects, lines
 
 
 def _get_visible_line_fragment_wrt_clipping_space(ln: Line) -> Optional[Line]:
     boundary_planes = _get_clipping_space_volume()
     _, line_fragments = _get_line_fragments_outside_convex_volume(
-        ln, boundary_planes, inverted=True)
+        ln, boundary_planes, 0.0, inverted=True)
     assert len(line_fragments) <= 1
     if len(line_fragments) == 1:
         return line_fragments[0]
@@ -230,12 +267,25 @@ def _get_visible_line_fragment_wrt_clipping_space(ln: Line) -> Optional[Line]:
 
 
 def _get_visible_line_fragments_wrt_triangle(
-        ln: Line,
-        tr: Triangle,
-        eps: float = kDefaultEps) -> Tuple[bool, List[Line]]:
+        ln: Line, tr: Triangle) -> Tuple[bool, List[Line]]:
     boundary_planes = _get_covered_triangle_volume(tr)
-    return _get_line_fragments_outside_convex_volume(ln, boundary_planes,
-                                                     False, eps)
+
+    # Do this in non-homogenious coordinates.
+    p, q = to_vec3(ln.p), to_vec3(ln.q)
+
+    # Calculate the minimum line length.
+    # We want to make sure that a line behind a triangle that ends exactly in said triangle does not leave any line fragment behind.
+    n = _get_triangle_normal(tr)
+    pq = sub_vec3(q, p)
+    dot_prod = abs(dot_vec3(pq, n) / (norm2_vec3(pq) * norm2_vec3(n)))
+    min_length = kDefaultEps
+    if dot_prod > 0.0:
+        min_length += kDefaultEps / dot_prod
+
+    return _get_line_fragments_outside_convex_volume(ln,
+                                                     boundary_planes,
+                                                     min_length,
+                                                     inverted=False)
 
 
 def _get_line_bbox(ln: Line) -> BoundingBox3:
