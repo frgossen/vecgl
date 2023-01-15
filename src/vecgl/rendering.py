@@ -210,7 +210,6 @@ def _get_visible_line_fraction_wrt_plane(
 def _get_line_fragment_from_fractions(ln: Line, fraction_start: float,
                                       fraction_end: float,
                                       inverted: bool) -> Iterator[Line]:
-    print(fraction_start, fraction_end, inverted)
     assert 0.0 <= fraction_start and fraction_start <= 1.0
     assert 0.0 <= fraction_end and fraction_end <= 1.0
 
