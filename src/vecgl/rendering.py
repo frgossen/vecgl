@@ -1,338 +1,341 @@
-from math import isnan
-from typing import Iterable, List, Optional, Tuple
+from typing import Iterable, Iterator, List, Tuple
 
 from vecgl.bb3tree import BB3Tree, BoundingBox3, create_bb3tree
-from vecgl.linalg import (
-    Vec3,
-    add_vec3,
-    kDefaultEps,
-    cross_vec3,
-    dot_vec3,
-    max_vec3,
-    min_vec3,
-    norm2_vec3,
-    scale_vec3,
-    sub_vec3,
-    to_vec3,
-    unit_vec3,
-    x_vec3,
-    y_vec3,
-    z_vec3,
-)
+from vecgl.linalg import (Vec3, add_vec3, cross_vec3, dot_vec3,
+                          homogenious_vec4_to_vec3, is_finite_vec3,
+                          kDefaultEps, max_vec3, min_vec3, norm2_vec3,
+                          ortho_vec2, right_of_vec2, scale_vec3, sub_vec2,
+                          sub_vec3, vec3_to_homogenious_vec4, vec3_to_xy_vec2,
+                          xy_vec2_to_vec3, z_vec3)
 from vecgl.model import Line, Model, Point, Triangle
 
 Plane3 = Tuple[Vec3, Vec3]
-Volume3 = Tuple[Plane3]
 
 
-def _get_clipping_space_volume() -> Volume3:
+def _get_clipping_space_planes() -> Iterator[Plane3]:
 
     # Collect the 6 boundary planes.
-    # Ensure that normals point away from the clipping space volume.
-    boundary_planes: List[Plane3] = []
+    # Ensure that normals point towards the clipping space.
     for i in range(3):
         for a in [-1.0, 1.0]:
             u = [0.0, 0.0, 0.0]
             u[i] = a
             p = tuple(u)
+            u[i] = -a
             n = tuple(u)
             pl = p, n
-            boundary_planes.append(pl)
-    return tuple(boundary_planes)
+            yield pl
 
 
-def _get_triangle_normal(tr: Triangle) -> Vec3:
+def _get_triangle_front_plane(tr: Triangle) -> Plane3:
     p, q, r = tr.p, tr.q, tr.r
 
     # Do this in non-homogenious coordinates.
-    p = to_vec3(p)
-    q = to_vec3(q)
-    r = to_vec3(r)
+    p, q, r = homogenious_vec4_to_vec3(p), homogenious_vec4_to_vec3(
+        q), homogenious_vec4_to_vec3(r)
 
+    # Compute normal and ensure that it points away from the covered volume.
     pq = sub_vec3(q, p)
     pr = sub_vec3(r, p)
     n = cross_vec3(pq, pr)
-    return n
+    if z_vec3(n) > 0.0:
+        n = scale_vec3(-1.0, n)
+
+    # Return the front boundary plane of the triangle.
+    return p, n
 
 
-def _get_eps_plane(pl: Plane3, eps: float) -> Plane3:
-    p, n = pl
-    n0 = unit_vec3(n)
-    p_eps = add_vec3(p, scale_vec3(eps, n0))
-    return p_eps, n
-
-
-def _get_covered_triangle_volume(tr: Triangle) -> Volume3:
+def _get_triangle_side_planes(tr: Triangle) -> Iterator[Plane3]:
     p, q, r = tr.p, tr.q, tr.r
 
     # Do this in non-homogenious coordinates.
-    p = to_vec3(p)
-    q = to_vec3(q)
-    r = to_vec3(r)
+    p, q, r = homogenious_vec4_to_vec3(p), homogenious_vec4_to_vec3(
+        q), homogenious_vec4_to_vec3(r)
 
-    # Collect the front boundary plane of the triangle.
-    # Ensure that the normal points away from the covered volume.
-    # Shrink the covered volume by eps not to cover elements that are precisely on the triangle, e.g. its edge lines.
-    n = _get_triangle_normal(tr)
-    ccwise = -1.0 if z_vec3(n) > 0.0 else 1.0
-    n = scale_vec3(ccwise, n)
-    front_plane = p, n
-    eps_front_plane = _get_eps_plane(front_plane, -kDefaultEps)
-    boundary_planes = [eps_front_plane]
+    # Project to the xy-plane to compute the normals.
+    p2 = vec3_to_xy_vec2(p)
+    q2 = vec3_to_xy_vec2(q)
+    r2 = vec3_to_xy_vec2(r)
 
-    # Collect the three remaining boundary planes per side of the triangle.
-    # Ensure that normals point away from the covered volume.
-    # Enlarge the covered colume by eps to cover elements behind the triangle edge, e.g elements in the gaps between triangles.
-    pq = sub_vec3(q, p)
-    n_pq = -ccwise * y_vec3(pq), ccwise * x_vec3(pq), 0.0
-    pq_plane = p, n_pq
-    eps_pq_plane = _get_eps_plane(pq_plane, kDefaultEps)
-    boundary_planes.append(eps_pq_plane)
-    qr = sub_vec3(r, q)
-    n_qr = -ccwise * y_vec3(qr), ccwise * x_vec3(qr), 0.0
-    qr_plane = q, n_qr
-    eps_qr_plane = _get_eps_plane(qr_plane, kDefaultEps)
-    boundary_planes.append(eps_qr_plane)
-    rp = sub_vec3(p, r)
-    n_rp = -ccwise * y_vec3(rp), ccwise * x_vec3(rp), 0.0
-    rp_plane = r, n_rp
-    eps_rp_plane = _get_eps_plane(rp_plane, kDefaultEps)
-    boundary_planes.append(eps_rp_plane)
+    # Find out if the triangle is in counter-clockwise order and the normals are
+    # to the right.
+    pq2 = sub_vec2(q2, p2)
+    pr2 = sub_vec2(r2, p2)
+    normals_to_the_right = right_of_vec2(pq2, pr2)
 
-    return tuple(boundary_planes)
+    # Collect the three boundary planes per side of the triangle.
+    n_pq2 = ortho_vec2(pq2, normals_to_the_right)
+    n_pq = xy_vec2_to_vec3(n_pq2, 0.0)
+    yield p, n_pq
+    qr2 = sub_vec2(r2, q2)
+    n_qr2 = ortho_vec2(qr2, normals_to_the_right)
+    n_qr = xy_vec2_to_vec3(n_qr2, 0.0)
+    yield q, n_qr
+    rp2 = sub_vec2(p2, r2)
+    n_rp2 = ortho_vec2(rp2, normals_to_the_right)
+    n_rp = xy_vec2_to_vec3(n_rp2, 0.0)
+    yield r, n_rp
 
 
-def _get_plane_side(pl: Plane3, q: Vec3) -> float:
-    p, n = pl
-    pq = sub_vec3(q, p)
-    return dot_vec3(pq, n)
+def _get_relevant_triangles_query(bb: BoundingBox3) -> BoundingBox3:
 
-
-def _get_plane_line_intersection(pl: Plane3, q: Vec3,
-                                 r: Vec3) -> Optional[float]:
-    p, n = pl
-    qr = sub_vec3(r, q)
-    qp = sub_vec3(p, q)
-    denom = dot_vec3(qr, n)
-    if abs(denom) == 0.0:
-        return None
-    return dot_vec3(qp, n) / denom
-
-
-def _get_point_on_line(a: float, p: Vec3, q: Vec3) -> Vec3:
-    return add_vec3(scale_vec3(1.0 - a, p), scale_vec3(a, q))
-
-
-def _get_triangle_query(bb: BoundingBox3) -> BoundingBox3:
+    # Relevant triangle are all those that
+    #   (i)  intersect the bounding box, or
+    #   (ii) the clipping space in front of it.
     lb_x, lb_y, _ = bb.lb
     query_lb = lb_x, lb_y, -1.0
     query_ub = bb.ub
     return BoundingBox3(query_lb, query_ub)
 
 
-def _is_point_visible_wrt_clipping_space(pt: Point) -> bool:
-
-    # Do this in non-homogenious coordinates.
-    p = to_vec3(pt.p)
-
-    px, py, pz = p
-    if px < -1.0 or py < -1.0 or pz < -1.0:
-        return False
-    if px > 1.0 or py > 1.0 or pz > 1.0:
-        return False
-    return True
-
-
-def _is_point_visible_wrt_triangle(pt: Point, tr: Triangle) -> bool:
-
-    # Do this in non-homogenious coordinates.
-    p = to_vec3(pt.p)
-
-    # If point is on or outside of any boundary plane then it is visible.
-    boundary_planes = _get_covered_triangle_volume(tr)
-    for pl in boundary_planes:
-        if _get_plane_side(pl, p) > 0:
-            return True
-    return False
-
-
 def _get_point_bbox(pt: Point) -> BoundingBox3:
 
     # Do this in non-homogenious coordinates.
-    p = to_vec3(pt.p)
+    p = homogenious_vec4_to_vec3(pt.p)
 
     return BoundingBox3(p, p)
-
-
-def _get_visible_points(points: Iterable[Point],
-                        triangle_tree: BB3Tree) -> Iterable[Point]:
-    for pt in points:
-        if not _is_point_visible_wrt_clipping_space(pt):
-            continue
-
-        triangle_query = _get_triangle_query(_get_point_bbox(pt))
-        rel_triangles = triangle_tree.find(triangle_query)
-        if all(_is_point_visible_wrt_triangle(pt, tr) for tr in rel_triangles):
-            yield pt
-
-
-def _get_line_fragments_outside_convex_volume(
-        ln: Line,
-        boundary_planes: Volume3,
-        min_length: float,
-        inverted: bool = False) -> Tuple[bool, List[Line]]:
-
-    # Do this in non-homogenious coordinates.
-    p, q = to_vec3(ln.p), to_vec3(ln.q)
-
-    # Bail if the line is too short.
-    pq = sub_vec3(q, p)
-    pq_length = norm2_vec3(pq)
-    if p == q or pq_length < min_length:
-        intersects = False
-        return intersects, []
-
-    # For convex volumes, the line fragments outside of the volume will be at
-    # most two:
-    #   - a head fragment starting in p, and
-    #   - a tail fragment ending in q.
-    # For a line fragment to be outside of the volume, it must be on the outer
-    # side of one of the boundary planes. Start with empty head and tail
-    # fragments as an under approximation.
-    head_fragment_ub = 0.0
-    tail_fragment_lb = 1.0
-
-    # Find the complete line fragments by updating them per boundary plane.
-    for pl in boundary_planes:
-        intersection = _get_plane_line_intersection(pl, p, q)
-        if intersection is not None:
-
-            # Line and boundary plane intersect. Update head and tail fragment.
-            _, n = pl
-            is_same_direction = dot_vec3(n, pq) > 0
-            if is_same_direction:
-                tail_fragment_lb = min(intersection, tail_fragment_lb)
-            else:
-                head_fragment_ub = max(intersection, head_fragment_ub)
-        else:
-
-            # Line and boundary plane are parallel to each other. Return the
-            # line unchanged if it is entirely outside of the volume.
-            is_outside_volume = _get_plane_side(pl, p) > 0
-            if is_outside_volume:
-                intersects = False
-                return intersects, [ln] if not inverted else []
-
-    # If head and tail fragment are overlapping, the line does not intersect the
-    # volume and we can return it as is.
-    if head_fragment_ub >= tail_fragment_lb - kDefaultEps:
-        intersects = False
-        return intersects, [ln] if not inverted else []
-
-    # Otherwise, the line and triangle intersect, resulting in up to two line
-    # fragments.
-    lines = []
-    intersects = True
-    if not inverted:
-        if head_fragment_ub * pq_length >= min_length:
-            head_fragment_q = _get_point_on_line(head_fragment_ub, p, q)
-            if not p == head_fragment_q:
-                head_fragment = Line(p, head_fragment_q, ln.color)
-                lines.append(head_fragment)
-        if (1.0 - tail_fragment_lb) * pq_length >= min_length:
-            tail_fragment_p = _get_point_on_line(tail_fragment_lb, p, q)
-            if not tail_fragment_p == q:
-                tail_fragment = Line(tail_fragment_p, q, ln.color)
-                lines.append(tail_fragment)
-    else:
-        assert head_fragment_ub < tail_fragment_lb or isnan(
-            head_fragment_ub) or isnan(tail_fragment_lb)
-        if (tail_fragment_lb - head_fragment_ub) * pq_length >= min_length:
-            center_fragment_p = _get_point_on_line(head_fragment_ub, p, q)
-            center_fragment_q = _get_point_on_line(tail_fragment_lb, p, q)
-            center_fragment = Line(center_fragment_p, center_fragment_q,
-                                   ln.color)
-            lines.append(center_fragment)
-    return intersects, lines
-
-
-def _get_visible_line_fragment_wrt_clipping_space(ln: Line) -> Optional[Line]:
-    boundary_planes = _get_clipping_space_volume()
-    _, line_fragments = _get_line_fragments_outside_convex_volume(
-        ln, boundary_planes, 0.0, inverted=True)
-    assert len(line_fragments) <= 1
-    if len(line_fragments) == 1:
-        return line_fragments[0]
-    return None
-
-
-def _get_visible_line_fragments_wrt_triangle(
-        ln: Line, tr: Triangle) -> Tuple[bool, List[Line]]:
-    boundary_planes = _get_covered_triangle_volume(tr)
-
-    # Do this in non-homogenious coordinates.
-    p, q = to_vec3(ln.p), to_vec3(ln.q)
-
-    # Calculate the minimum line length.
-    # We want to make sure that a line behind a triangle that ends exactly in said triangle does not leave any line fragment behind.
-    n = _get_triangle_normal(tr)
-    pq = sub_vec3(q, p)
-    dot_prod = abs(dot_vec3(pq, n) / (norm2_vec3(pq) * norm2_vec3(n)))
-    min_length = kDefaultEps
-    if dot_prod > 0.0:
-        min_length += kDefaultEps / dot_prod
-
-    return _get_line_fragments_outside_convex_volume(ln,
-                                                     boundary_planes,
-                                                     min_length,
-                                                     inverted=False)
 
 
 def _get_line_bbox(ln: Line) -> BoundingBox3:
 
     # Do this in non-homogenious coordinates.
-    p, q = to_vec3(ln.p), to_vec3(ln.q)
+    p, q = homogenious_vec4_to_vec3(ln.p), homogenious_vec4_to_vec3(ln.q)
 
     lb = min_vec3(p, q)
     ub = max_vec3(p, q)
     return BoundingBox3(lb, ub)
 
 
-def _get_visible_line_fragments(lines: List[Line],
-                                triangle_tree: BB3Tree) -> Iterable[Line]:
-
-    # Find visible line fragments wrt. clipping space.
-    line_fragments_in_clipping_space: List[Line] = []
-    for ln in lines:
-        ln_fragment = _get_visible_line_fragment_wrt_clipping_space(ln)
-        if ln_fragment is not None:
-            line_fragments_in_clipping_space.append(ln_fragment)
-
-    # Find visible line fragments within clipping space.
-    worklist = line_fragments_in_clipping_space
-    while worklist:
-        ln = worklist.pop()
-        triangle_query = _get_triangle_query(_get_line_bbox(ln))
-        is_fully_visible = True
-        for tr in triangle_tree.find(triangle_query):
-            intersects, ln_fragments = _get_visible_line_fragments_wrt_triangle(
-                ln, tr)
-            if intersects:
-                worklist.extend(ln_fragments)
-                is_fully_visible = False
-                break
-        if is_fully_visible:
-            yield ln
-
-
 def _get_triangle_bbox(tr: Triangle) -> BoundingBox3:
 
     # Do this in non-homogenious coordinates.
-    p, q, r = to_vec3(tr.p), to_vec3(tr.q), to_vec3(tr.r)
+    p, q, r = homogenious_vec4_to_vec3(tr.p), homogenious_vec4_to_vec3(
+        tr.q), homogenious_vec4_to_vec3(tr.r)
 
-    lb = min_vec3(p, min_vec3(q, r))
-    ub = max_vec3(p, max_vec3(q, r))
+    lb = min_vec3(p, q, r)
+    ub = max_vec3(p, q, r)
     return BoundingBox3(lb, ub)
+
+
+def _is_point_visible_wrt_plane(pl: Plane3, q: Vec3,
+                                is_visible_on_plane: bool) -> bool:
+    if not is_finite_vec3(q):
+        return False
+    p, n = pl
+    if not is_finite_vec3(p, n):
+        return True
+    pq = sub_vec3(q, p)
+    threshold = -kDefaultEps if is_visible_on_plane else kDefaultEps
+    return dot_vec3(pq, n) > threshold
+
+
+def _is_point_visible_wrt_clipping_space(pt: Point) -> bool:
+
+    # Do this in non-homogenious coordinates.
+    p = homogenious_vec4_to_vec3(pt.p)
+
+    # For a point to be visible, it must be on or within all clipping space
+    # boundary planes.
+    for boundary_pl in _get_clipping_space_planes():
+        if not _is_point_visible_wrt_plane(
+                boundary_pl, p, is_visible_on_plane=True):
+            return False
+    return True
+
+
+def _is_point_visible_wrt_triangle(pt: Point, tr: Triangle) -> bool:
+
+    # Do this in non-homogenious coordinates.
+    p = homogenious_vec4_to_vec3(pt.p)
+
+    # For a point to be visible, it must be
+    #   (i)  on or in front of the triangle plane, or
+    #   (ii) outside any of the three remaining boundary planes.
+    front_pl = _get_triangle_front_plane(tr)
+    if _is_point_visible_wrt_plane(front_pl, p, is_visible_on_plane=True):
+        return True
+    for boundary_pl in _get_triangle_side_planes(tr):
+        if _is_point_visible_wrt_plane(boundary_pl,
+                                       p,
+                                       is_visible_on_plane=False):
+            return True
+
+    return False
+
+
+def _get_visible_points(points: Iterable[Point],
+                        triangle_tree: BB3Tree) -> Iterable[Point]:
+    for pt in points:
+
+        # Points must be
+        #   (i)  in clipping space, and
+        #   (ii) not covered by any triangle.
+        if not _is_point_visible_wrt_clipping_space(pt):
+            continue
+        query = _get_relevant_triangles_query(_get_point_bbox(pt))
+        rel_triangles = triangle_tree.find(query)
+        if all(_is_point_visible_wrt_triangle(pt, tr) for tr in rel_triangles):
+            yield pt
+
+
+def _get_visible_line_fraction_wrt_plane(
+        pl: Plane3, q: Vec3, r: Vec3,
+        is_visible_on_plane: bool) -> Tuple[bool, float]:
+    if not is_finite_vec3(q, r):
+        return True, 0.0
+
+    # If both end points are visible, so is the line between them.
+    if _is_point_visible_wrt_plane(
+            pl, q, is_visible_on_plane) and _is_point_visible_wrt_plane(
+                pl, r, is_visible_on_plane):
+        return True, 1.0
+
+    # Find the intersection, if any.
+    p, n = pl
+    if not is_finite_vec3(p, n):
+        return True, 1.0
+    qr = sub_vec3(r, q)
+    denom = dot_vec3(qr, n)
+    if abs(denom) < kDefaultEps:
+        return True, 0.0
+    qp = sub_vec3(p, q)
+    intersection = dot_vec3(qp, n) / denom
+    intersection = min(max(intersection, 0.0), 1.0)
+
+    # Return the visible fraction.
+    is_front = dot_vec3(n, qr) < 0
+    return is_front, intersection
+
+
+def _get_line_fragment_from_fractions(ln: Line, fraction_start: float,
+                                      fraction_end: float,
+                                      inverted: bool) -> Iterator[Line]:
+    print(fraction_start, fraction_end, inverted)
+    assert 0.0 <= fraction_start and fraction_start <= 1.0
+    assert 0.0 <= fraction_end and fraction_end <= 1.0
+
+    # Do this in non-homogenious coordinates.
+    p, q = homogenious_vec4_to_vec3(ln.p), homogenious_vec4_to_vec3(ln.q)
+
+    if not is_finite_vec3(p, q):
+        return
+
+    # If the fraction is empty, yield nothing or the full line segment.
+    pq = sub_vec3(q, p)
+    pq_length = norm2_vec3(pq)
+    if (fraction_end - fraction_start) * pq_length < kDefaultEps:
+        if inverted:
+            yield ln
+        return
+
+    # Find the end points of the visible line fragment(s). Use the original
+    # homogenious line points if possible to avoid numeric inconsistencies.
+    p_fraction_start = ln.p
+    if fraction_start * pq_length > kDefaultEps:
+        p_fraction_start = vec3_to_homogenious_vec4(
+            add_vec3(p, scale_vec3(fraction_start, pq)))
+    q_fraction_end = ln.q
+    if fraction_end * pq_length < pq_length - kDefaultEps:
+        q_fraction_end = vec3_to_homogenious_vec4(
+            add_vec3(p, scale_vec3(fraction_end, pq)))
+
+    # Yield the line fragments as requested.
+    if inverted and ln.p != p_fraction_start:
+        yield Line(ln.p, p_fraction_start, ln.color)
+    if not inverted:
+        yield Line(p_fraction_start, q_fraction_end, ln.color)
+    if inverted and q_fraction_end != ln.q:
+        yield Line(q_fraction_end, ln.q, ln.color)
+
+
+def _get_visible_line_fragment_wrt_clipping_space(ln: Line) -> Iterator[Line]:
+
+    # Do this in non-homogenious coordinates.
+    p, q = homogenious_vec4_to_vec3(ln.p), homogenious_vec4_to_vec3(ln.q)
+
+    # There will be at most one visible line fragment within the clipping space.
+    # For a line fragment to be visible, it must be on or within all clipping
+    # space boundary planes. We start with a fully visible line as an over
+    # approximation.
+    fraction_start = 0.0
+    fraction_end = 1.0
+    for boundary_pl in _get_clipping_space_planes():
+        is_front, fraction = _get_visible_line_fraction_wrt_plane(
+            boundary_pl, p, q, is_visible_on_plane=True)
+        if is_front:
+            fraction_end = min(fraction_end, fraction)
+        else:
+            fraction_start = max(fraction_start, fraction)
+
+    yield from _get_line_fragment_from_fractions(ln,
+                                                 fraction_start,
+                                                 fraction_end,
+                                                 inverted=False)
+
+
+def _get_visible_line_fragments_wrt_triangle(ln: Line,
+                                             tr: Triangle) -> Iterator[Line]:
+
+    # Do this in non-homogenious coordinates.
+    p, q = homogenious_vec4_to_vec3(ln.p), homogenious_vec4_to_vec3(ln.q)
+
+    # There will be at most two visible line fragments that are not covered by
+    # the triangle:
+    #   (i)  a head fragment starting in p, and
+    #   (ii) a tail fragment ending in q.
+    # For a line fragment to be visible, it must be
+    #   (i)  on or in front of the triangle plane, or
+    #   (ii) outside any of the three remaining boundary planes.
+    # We start with empty head and tail fragments as an under approximation.
+    head_fraction_end = 0.0
+    tail_fraction_start = 1.0
+
+    # Analyse visibility wrt. the triangle plane.
+    front_pl = _get_triangle_front_plane(tr)
+    is_front, faction = _get_visible_line_fraction_wrt_plane(
+        front_pl, p, q, is_visible_on_plane=True)
+    if is_front:
+        head_fraction_end = max(head_fraction_end, faction)
+    else:
+        tail_fraction_start = min(tail_fraction_start, faction)
+
+    # Analyse visibility wrt. the remaining boundary planes.
+    for boundary_pl in _get_triangle_side_planes(tr):
+        is_front, fraction = _get_visible_line_fraction_wrt_plane(
+            boundary_pl, p, q, is_visible_on_plane=False)
+        if is_front:
+            head_fraction_end = max(head_fraction_end, fraction)
+        else:
+            tail_fraction_start = min(tail_fraction_start, fraction)
+
+    yield from _get_line_fragment_from_fractions(ln,
+                                                 head_fraction_end,
+                                                 tail_fraction_start,
+                                                 inverted=True)
+
+
+def _get_visible_line_fragments(lines: List[Line],
+                                triangle_tree: BB3Tree) -> Iterable[Line]:
+
+    # Visible line fragments must be
+    #   (i)  in clipping space, and
+    #   (ii) not covered by any triangle.
+    for ln in lines:
+        for ln_root_fragment in _get_visible_line_fragment_wrt_clipping_space(
+                ln):
+            query = _get_relevant_triangles_query(
+                _get_line_bbox(ln_root_fragment))
+            rel_triangles = triangle_tree.find(query)
+            ln_fragment_list = [ln_root_fragment]
+            for tr in rel_triangles:
+                ln_fragment_list_next: List[Line] = []
+                for ln_fragment in ln_fragment_list:
+                    ln_fragment_list_next.extend(
+                        _get_visible_line_fragments_wrt_triangle(
+                            ln_fragment, tr))
+                ln_fragment_list = ln_fragment_list_next
+            for ln_fragment in ln_fragment_list:
+                yield ln_fragment
 
 
 def render(model: Model) -> Model:

@@ -1,5 +1,5 @@
 from functools import reduce
-from math import acos, copysign, cos, inf, sin, sqrt
+from math import acos, copysign, cos, inf, isfinite, sin, sqrt
 from operator import add, sub
 from typing import Callable, List, Tuple, Union
 
@@ -10,7 +10,7 @@ Mat2 = Tuple[Vec2, Vec2]
 Mat3 = Tuple[Vec3, Vec3, Vec3]
 Mat4 = Tuple[Vec4, Vec4, Vec4, Vec4]
 
-kDefaultEps = 0.00001
+kDefaultEps = 0.00000001
 
 # 2D cartesian coordinates.
 
@@ -43,6 +43,15 @@ def _cwise_binary_vec2(fn: Callable[[float, float], float], u: Vec2, v: Vec2):
 
 def _cwise_nary_vec2(fn: Callable[[float, float], float], *us: Vec2) -> Vec2:
     return reduce(lambda u, v: _cwise_binary_vec2(fn, u, v), us)
+
+
+def _is_finite_vec2(u: Vec2) -> bool:
+    ux, uy = u
+    return isfinite(ux) and isfinite(uy)
+
+
+def is_finite_vec2(*us: Vec2) -> bool:
+    return all(_is_finite_vec2(u) for u in us)
 
 
 def uniform_vec2(a: float) -> Vec2:
@@ -106,16 +115,29 @@ def unit_vec2(u: Vec2) -> Vec2:
     return scale_vec2(1.0 / norm2_vec2(u), u)
 
 
+def right_ortho_vec2(u: Vec2) -> Vec2:
+    ux, uy = u
+    return uy, -ux
+
+
+def left_ortho_vec2(u: Vec2) -> Vec2:
+    ux, uy = u
+    return -uy, ux
+
+
+def ortho_vec2(u: Vec2, right: bool) -> Vec2:
+    return right_ortho_vec2(u) if right else left_ortho_vec2(u)
+
+
+def right_of_vec2(u: Vec2, v: Vec2) -> bool:
+    return dot_vec2(u, right_ortho_vec2(v)) > 0
+
+
+def left_of_vec2(u: Vec2, v: Vec2) -> bool:
+    return dot_vec2(u, left_ortho_vec2(v)) > 0
+
+
 # 3D cartesian coordinates.
-
-
-def to_vec3(u: Union[Vec3, Vec4]) -> Vec3:
-    if len(u) == 3:
-        return u
-    ux, uy, uz, uw = u
-    if uw == 0.0:
-        return copysign(inf, ux), copysign(inf, uy), copysign(inf, uz)
-    return ux / uw, uy / uw, uz / uw
 
 
 def x_vec3(u: Vec3) -> float:
@@ -153,6 +175,15 @@ def _cwise_nary_vec3(fn: Callable[[float, float], float], *us: Vec3) -> Vec3:
     return reduce(lambda u, v: _cwise_binary_vec3(fn, u, v), us)
 
 
+def _is_finite_vec3(u: Vec3) -> bool:
+    ux, uy, uz = u
+    return isfinite(ux) and isfinite(uy) and isfinite(uz)
+
+
+def is_finite_vec3(*us: Vec3) -> bool:
+    return all(_is_finite_vec3(u) for u in us)
+
+
 def uniform_vec3(a: float) -> Vec3:
     return a, a, a
 
@@ -160,11 +191,11 @@ def uniform_vec3(a: float) -> Vec3:
 def is_eps_eq_vec3(u: Vec3, v: Vec3, eps: float = kDefaultEps):
     ux, uy, uz = u
     vx, vy, vz = v
-    return abs(ux - vx) < eps and abs(uy - vy) < eps and abs(uz - vz) < eps
+    return abs(ux - vx) <= eps and abs(uy - vy) <= eps and abs(uz - vz) <= eps
 
 
 def is_null_vec3(u: Vec3, eps: float = kDefaultEps) -> bool:
-    return is_eps_eq_vec3(u, uniform_vec3(0), eps)
+    return is_eps_eq_vec3(u, uniform_vec3(0.0), eps)
 
 
 def scale_vec3(a: float, u: Vec3) -> Vec3:
@@ -223,13 +254,6 @@ def unit_vec3(u: Vec3) -> Vec3:
 # Homogenious coordinates.
 
 
-def to_vec4(u: Union[Vec3, Vec4]) -> Vec4:
-    if len(u) == 4:
-        return u
-    ux, uy, uz = u
-    return ux, uy, uz, 1.0
-
-
 def x_vec4(u: Vec4) -> float:
     ux, _, _, _ = u
     return ux
@@ -253,6 +277,15 @@ def w_vec4(u: Vec4) -> float:
 def str_vec4(u: Vec4) -> str:
     ux, uy, uz, uw = u
     return f"({ux:.2f}, {uy:.2f}, {uz:.2f}, {uw:.2f})"
+
+
+def _is_finite_vec4(u: Vec4) -> bool:
+    ux, uy, uz, uw = u
+    return isfinite(ux) and isfinite(uy) and isfinite(uz) and isfinite(uw)
+
+
+def is_finite_vec4(*us: Vec4) -> bool:
+    return all(_is_finite_vec4(u) for u in us)
 
 
 def dot_vec4(u: Vec4, v: Vec4) -> float:
@@ -364,3 +397,44 @@ def get_viewport_mat4(x: float, y: float, w: float, h: float) -> Mat4:
         (0.0, 0.0, 1.0, 0.0),
         (0.0, 0.0, 0.0, 1.0),
     )
+
+
+# Conversions.
+
+
+def xy_vec2_to_vec3(u: Vec2, z: float = 0.0) -> Vec3:
+    ux, uy = u
+    return ux, uy, z
+
+
+def vec3_to_xy_vec2(u: Vec3) -> Vec2:
+    ux, uy, _ = u
+    return ux, uy
+
+
+def homogenious_vec4_to_vec3(u: Union[Vec3, Vec4]) -> Vec3:
+    if len(u) == 3:
+        return u
+    ux, uy, uz, uw = u
+    if uw == 0.0:
+        return copysign(inf, ux), copysign(inf, uy), copysign(inf, uz)
+    return ux / uw, uy / uw, uz / uw
+
+
+def vec3_to_homogenious_vec4(u: Union[Vec3, Vec4]) -> Vec4:
+    if len(u) == 4:
+        return u
+    ux, uy, uz = u
+    return ux, uy, uz, 1.0
+
+
+def homogenious_vec4_to_xy_vec2(u: Vec4) -> Vec2:
+    ux, uy, _, uw = u
+    if uw == 0.0:
+        return copysign(inf, ux), copysign(inf, uy)
+    return ux / uw, uy / uw
+
+
+def xy_vec2_to_homogenious_vec4(u: Vec2) -> Vec4:
+    ux, uy = u
+    return ux, uy, 0.0, 1.0

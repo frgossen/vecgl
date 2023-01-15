@@ -1,12 +1,7 @@
-from pytest import approx
-from vecgl.linalg import (
-    get_frustum_mat4,
-    get_rotate_y_mat4,
-    get_translate_mat4,
-    mul_mat4,
-)
+from vecgl.linalg import (get_frustum_mat4, get_rotate_y_mat4,
+                          get_translate_mat4, mul_mat4)
 from vecgl.model import Model, get_cube_model
-from vecgl.rendering import kDefaultEps, render
+from vecgl.rendering import render
 
 
 def test_render_points_outside_of_clipping_space():
@@ -86,6 +81,13 @@ def test_render_point_ifo_triangle_edge():
     rendered = render(model)
     assert len(rendered.points) == 1
     assert len(rendered.triangles) == 1
+
+
+def test_render_line_outside_of_clipping_space():
+    model = Model()
+    model.add_line((-2.3, 0.0, 0.0), (4.5, 0.0, 0.0))
+    rendered = render(model)
+    assert len(rendered.lines) == 1
 
 
 def test_render_lines_outside_of_clipping_space():
@@ -172,7 +174,7 @@ def test_render_line_partly_behind_triangle_edge():
     assert len(rendered.triangles) == 1
     ln = rendered.lines[0]
     assert (1.0, 0.0, -1.0, 1.0) == ln.p
-    assert approx((0.5, 0.5, 0.0, 1.0), abs=2 * kDefaultEps) == ln.q
+    assert (0.5, 0.5, 0.0, 1.0) == ln.q
 
 
 def test_render_line_through_triangle_cw():
@@ -227,13 +229,22 @@ def test_render_line_on_clipping_space_edge():
     assert len(rendered.lines) == 1
 
 
-def test_render_in_focal_point():
+def test_render_line_in_focal_point():
     model = Model()
     model.add_line((0.0, 0.0, 0.0), (0.0, 1.0, 0.0))
     projection_mat4 = get_frustum_mat4(-1.0, 1.0, -1.0, 1.0, 1.0, 100.0)
     cube_in_ndc = model.transform(projection_mat4)
     rendered = render(cube_in_ndc)
     assert len(rendered.lines) == 0
+
+
+def test_render_point_in_focal_point():
+    model = Model()
+    model.add_point((0.0, 0.0, 0.0))
+    projection_mat4 = get_frustum_mat4(-1.0, 1.0, -1.0, 1.0, 1.0, 100.0)
+    cube_in_ndc = model.transform(projection_mat4)
+    rendered = render(cube_in_ndc)
+    assert len(rendered.points) == 0
 
 
 def test_render_cube():

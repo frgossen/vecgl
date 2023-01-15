@@ -1,8 +1,8 @@
 from math import isnan
 from tkinter import ROUND, Canvas, Tk
-from typing import Iterable
+from typing import Iterator
 
-from vecgl.linalg import Vec4, get_viewport_mat4, to_vec3
+from vecgl.linalg import Vec4, get_viewport_mat4, homogenious_vec4_to_vec3
 from vecgl.model import Model
 from vecgl.rendering import render
 
@@ -30,17 +30,17 @@ def show(
 
     # Draw the triangles first so that later drawn lines and points are visible.
     for tr in model.triangles:
-        px, py, _ = to_vec3(tr.p)
-        qx, qy, _ = to_vec3(tr.q)
-        rx, ry, _ = to_vec3(tr.r)
+        px, py, _ = homogenious_vec4_to_vec3(tr.p)
+        qx, qy, _ = homogenious_vec4_to_vec3(tr.q)
+        rx, ry, _ = homogenious_vec4_to_vec3(tr.r)
         coords = px, py, qx, qy, rx, ry
         if not any(isnan(c) for c in coords):
             canvas.create_polygon(coords, fill=tr.color)
 
     # Draw the lines fragments, which are fully visible.
     for ln in model.lines:
-        px, py, _ = to_vec3(ln.p)
-        qx, qy, _ = to_vec3(ln.q)
+        px, py, _ = homogenious_vec4_to_vec3(ln.p)
+        qx, qy, _ = homogenious_vec4_to_vec3(ln.q)
         coords = px, py, qx, qy
         if not any(isnan(c) for c in coords):
             canvas.create_line(*coords,
@@ -51,7 +51,7 @@ def show(
 
     # Draw the points, which are fully visible.
     for pt in model.points:
-        px, py, _ = to_vec3(pt.p)
+        px, py, _ = homogenious_vec4_to_vec3(pt.p)
         coords = px, py
         if not any(isnan(c) for c in coords):
             canvas.create_line(*coords,
@@ -71,7 +71,7 @@ def to_svg(
     width: int = kDefaultWidth,
     height: int = kDefaultHeight,
     stroke_width: int = kDefaultStrokeWidth,
-) -> Iterable[str]:
+) -> Iterator[str]:
 
     # Render if needed.
     model = model if model.rendered else render(model)
@@ -83,20 +83,20 @@ def to_svg(
 
     # Add the triangles.
     for tr in model.triangles:
-        px, py, _ = to_vec3(tr.p)
-        qx, qy, _ = to_vec3(tr.q)
-        rx, ry, _ = to_vec3(tr.r)
+        px, py, _ = homogenious_vec4_to_vec3(tr.p)
+        qx, qy, _ = homogenious_vec4_to_vec3(tr.q)
+        rx, ry, _ = homogenious_vec4_to_vec3(tr.r)
         yield f"  <polygon points=\"{px},{py} {qx},{qy} {rx},{ry}\" fill=\"{tr.color}\"/>\n"
 
     # Add the lines.
     for ln in model.lines:
-        px, py, _ = to_vec3(ln.p)
-        qx, qy, _ = to_vec3(ln.q)
+        px, py, _ = homogenious_vec4_to_vec3(ln.p)
+        qx, qy, _ = homogenious_vec4_to_vec3(ln.q)
         yield f"  <line x1=\"{px}\" y1=\"{py}\" x2=\"{qx}\" y2=\"{qy}\" stroke=\"{ln.color}\" stroke-linecap=\"round\" stroke-width=\"{stroke_width}\"/>\n"
 
     # Add the points.
     for pt in model.points:
-        px, py, _ = to_vec3(pt.p)
+        px, py, _ = homogenious_vec4_to_vec3(pt.p)
         yield f"  <circle cx=\"{px}\" cy=\"{py}\" r=\"{stroke_width/2}\" fill=\"green\"/>\n"
 
     yield f"</svg>\n"
@@ -117,7 +117,7 @@ def _p_to_json(p: Vec4) -> str:
     return "[ " + ", ".join(str(a) for a in p) + " ]"
 
 
-def to_json(model: Model) -> Iterable[str]:
+def to_json(model: Model) -> Iterator[str]:
     yield "{\n"
 
     # Add the points.
@@ -159,3 +159,23 @@ def to_json(model: Model) -> Iterable[str]:
 def write_json(model: Model, path: str) -> None:
     with open(path, "w") as fout:
         fout.writelines(to_json(model))
+
+
+def to_python(model: Model) -> Iterator[str]:
+
+    # Add the points.
+    for pt in model.points:
+        yield f"model.add_point({homogenious_vec4_to_vec3(pt.p)})\n"
+
+    # Add the lines.
+    for ln in model.lines:
+        yield f"model.add_line({homogenious_vec4_to_vec3(ln.p)}, {homogenious_vec4_to_vec3(ln.q)})\n"
+
+    # Add the triangles.
+    for tr in model.triangles:
+        yield f"model.add_triangle({homogenious_vec4_to_vec3(tr.p)}, {homogenious_vec4_to_vec3(tr.q)}, {homogenious_vec4_to_vec3(tr.r)})\n"
+
+
+def write_python(model: Model, path: str) -> None:
+    with open(path, "w") as fout:
+        fout.writelines(to_python(model))
