@@ -1,6 +1,7 @@
 from vecgl.linalg import (get_frustum_mat4, get_rotate_y_mat4,
                           get_translate_mat4, mul_mat4)
-from vecgl.model import Model, get_cube_model
+from vecgl.model import Model
+from vecgl.modellib import get_cube_model
 from vecgl.rendering import render
 
 

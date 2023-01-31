@@ -8,6 +8,7 @@ from vecgl.linalg import (Vec3, add_vec3, cross_vec3, dot_vec3,
                           sub_vec3, vec3_to_homogenious_vec4, vec3_to_xy_vec2,
                           xy_vec2_to_vec3, z_vec3)
 from vecgl.model import Line, Model, Point, Triangle
+from vecgl.transforms import get_grid_model
 
 Plane3 = Tuple[Vec3, Vec3]
 
@@ -344,5 +345,4 @@ def render(model: Model) -> Model:
     rendered.lines = list(
         _get_visible_line_fragments(model.lines, triangle_tree))
     rendered.triangles = model.triangles  # Not yet implemented.
-    rendered.rendered = True
     return rendered

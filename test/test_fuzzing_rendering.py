@@ -1,18 +1,25 @@
 from collections import defaultdict
 from math import pi
 from random import uniform
-from typing import Any, Dict, Iterable, Iterator, Optional, Set, Tuple
+from typing import (Any, Callable, Dict, Iterable, Iterator, Optional, Set,
+                    Tuple)
 
 from vecgl.linalg import (Vec4, get_frustum_mat4, get_rotate_x_mat4,
                           get_rotate_y_mat4, get_rotate_z_mat4,
                           get_translate_mat4, homogenious_vec4_to_vec3,
                           homogenious_vec4_to_xy_vec2, mul_mat4)
-from vecgl.model import Model, get_cube_model
+from vecgl.model import Model
+from vecgl.modellib import (get_cube_model, get_square_model,
+                            get_tetrahedron_model)
 from vecgl.rendering import kDefaultEps, render
 
 
 def _get_random_vec3(a: float = -2.0, b: float = 2.0):
     return tuple(uniform(a, b) for _ in range(3))
+
+
+def _get_random_angle() -> float:
+    return uniform(0, 2 * pi)
 
 
 def _is_in_cipping_space(p: Vec4, eps: float = kDefaultEps):
@@ -44,21 +51,6 @@ def test_render_random_lines():
     for ln in rendered.lines:
         assert _is_in_cipping_space(ln.p)
         assert _is_in_cipping_space(ln.q)
-
-
-def _get_random_angle() -> float:
-    return uniform(0, 2 * pi)
-
-
-def get_rotated_and_rendered_cube_model(ax: float, ay: float, az: float):
-    cube = get_cube_model()
-    view_mat4 = mul_mat4(get_translate_mat4(0.0, 0.0, -3.0),
-                         get_rotate_x_mat4(ax), get_rotate_y_mat4(ay),
-                         get_rotate_z_mat4(az))
-    projection_mat4 = get_frustum_mat4(-1.0, 1.0, -1.0, 1.0, 1.0, 100.0)
-    cube_in_ndc = cube.transform(mul_mat4(projection_mat4, view_mat4))
-    rendered = render(cube_in_ndc)
-    return rendered
 
 
 Graph = Dict[Any, Set[Any]]
@@ -137,7 +129,29 @@ def _get_graph_from_tuples(tuples: Iterable[Tuple[Any, Any]]) -> Graph:
     return graph
 
 
-def _get_expected_graph_4() -> Graph:
+def _get_rotated_and_rendered_model(model: Model, ax: float, ay: float,
+                                    az: float):
+    view_mat4 = mul_mat4(get_translate_mat4(0.0, 0.0, -3.0),
+                         get_rotate_x_mat4(ax), get_rotate_y_mat4(ay),
+                         get_rotate_z_mat4(az))
+    projection_mat4 = get_frustum_mat4(-1.0, 1.0, -1.0, 1.0, 1.0, 100.0)
+    model_in_ndc = model.transform(mul_mat4(projection_mat4, view_mat4))
+    rendered = render(model_in_ndc)
+    return rendered
+
+
+def _assert_rotated_and_rendered_model(rendered: Model,
+                                       expected_graphs: Iterable[Graph],
+                                       msg: Optional[str] = None):
+    actual_graph = _get_xy_graph(rendered)
+    assert any(_is_isomorph_graph(actual_graph, g) for g in expected_graphs)
+
+
+def get_rotated_and_rendered_cube_model(ax: float, ay: float, az: float):
+    return _get_rotated_and_rendered_model(get_cube_model(), ax, ay, az)
+
+
+def _get_expected_cube_graph_4() -> Graph:
     #
     #   p ----- q
     #   |       |
@@ -149,7 +163,7 @@ def _get_expected_graph_4() -> Graph:
     return _get_graph_from_tuples(tuples)
 
 
-def _get_expected_graph_6() -> Graph:
+def _get_expected_cube_graph_6() -> Graph:
     #
     #      t --- u
     #     /       \
@@ -164,7 +178,7 @@ def _get_expected_graph_6() -> Graph:
     return _get_graph_from_tuples(tuples)
 
 
-def _get_expected_graph_7() -> Graph:
+def _get_expected_cube_graph_7() -> Graph:
     #
     #      t ----- u
     #     /       /|
@@ -183,20 +197,132 @@ def _get_expected_graph_7() -> Graph:
 def assert_rotated_and_rendered_cube_model(rendered: Model,
                                            msg: Optional[str] = None):
     expected_graphs = [
-        _get_expected_graph_4(),
-        _get_expected_graph_6(),
-        _get_expected_graph_7(),
+        _get_expected_cube_graph_4(),
+        _get_expected_cube_graph_6(),
+        _get_expected_cube_graph_7(),
     ]
-    actual_graph = _get_xy_graph(rendered)
-    assert any(_is_isomorph_graph(actual_graph, g)
-               for g in expected_graphs), msg
+    _assert_rotated_and_rendered_model(rendered, expected_graphs, msg)
 
 
-def test_render_random_cube_rotation():
-    n = 512
+def _test_rotated_and_rendered_model(
+        model_generator_fn: Callable[[float, float, float], Model],
+        assertion_fn: Callable[[Model, str], None],
+        n: int = 512):
     for _ in range(n):
         ax, ay, az = _get_random_angle(), _get_random_angle(
         ), _get_random_angle()
-        rendered = get_rotated_and_rendered_cube_model(ax, ay, az)
+        rendered = model_generator_fn(ax, ay, az)
         msg = f"ax, ay, az = {ax}, {ay}, {az}"
-        assert_rotated_and_rendered_cube_model(rendered, msg)
+        assertion_fn(rendered, msg)
+
+
+def test_rotated_and_rendered_cube_model():
+    _test_rotated_and_rendered_model(get_rotated_and_rendered_cube_model,
+                                     assert_rotated_and_rendered_cube_model)
+
+
+def get_rotated_and_rendered_square_model(ax: float, ay: float, az: float):
+    square = get_square_model()
+    view_mat4 = mul_mat4(get_translate_mat4(0.0, 0.0, -3.0),
+                         get_rotate_x_mat4(ax), get_rotate_y_mat4(ay),
+                         get_rotate_z_mat4(az))
+    projection_mat4 = get_frustum_mat4(-1.0, 1.0, -1.0, 1.0, 1.0, 100.0)
+    square_in_ndc = square.transform(mul_mat4(projection_mat4, view_mat4))
+    rendered = render(square_in_ndc)
+    return rendered
+
+
+def _get_expected_square_graph() -> Graph:
+    #
+    #   p ----- q
+    #   |       |
+    #   |       |
+    #   s ----- r
+    #
+    p, q, r, s = 0, 1, 2, 3
+    tuples = [(p, q), (q, r), (r, s), (s, p)]
+    return _get_graph_from_tuples(tuples)
+
+
+def assert_rotated_and_rendered_square_model(rendered: Model,
+                                             msg: Optional[str] = None):
+    expected_graphs = [
+        _get_expected_square_graph(),
+    ]
+    _assert_rotated_and_rendered_model(rendered, expected_graphs, msg)
+
+
+def test_rotated_and_rendered_square_model():
+    _test_rotated_and_rendered_model(get_rotated_and_rendered_square_model,
+                                     assert_rotated_and_rendered_square_model)
+
+
+def get_rotated_and_rendered_tetrahedron_model(ax: float, ay: float,
+                                               az: float):
+    tetrahedron = get_tetrahedron_model()
+    view_mat4 = mul_mat4(get_translate_mat4(0.0, 0.0, -3.0),
+                         get_rotate_x_mat4(ax), get_rotate_y_mat4(ay),
+                         get_rotate_z_mat4(az))
+    projection_mat4 = get_frustum_mat4(-1.0, 1.0, -1.0, 1.0, 1.0, 100.0)
+    tetrahedron_in_ndc = tetrahedron.transform(
+        mul_mat4(projection_mat4, view_mat4))
+    rendered = render(tetrahedron_in_ndc)
+    return rendered
+
+
+def _get_expected_tetrahedron_graph_top() -> Graph:
+    #
+    #   p ----- q
+    #   | \   / |
+    #   |  \ /  |
+    #   |   s   |
+    #    \  |  /
+    #     \ | /
+    #       r
+    #
+    p, q, r, s = 0, 1, 2, 3
+    tuples = [(p, q), (q, r), (r, p), (p, s), (q, s), (r, s)]
+    return _get_graph_from_tuples(tuples)
+
+
+def _get_expected_tetrahedron_graph_bottom() -> Graph:
+    #
+    #   p ----- q
+    #    \     /
+    #     \   /
+    #       r
+    #
+    p, q, r = 0, 1, 2
+    tuples = [(p, q), (q, r), (r, p)]
+    return _get_graph_from_tuples(tuples)
+
+
+def _get_expected_tetrahedron_graph_side() -> Graph:
+    #
+    #       s
+    #     / | \
+    #    /  |  \
+    #   |   |   |
+    #   |   |   |
+    #   |   |   |
+    #   p - q - r
+    #
+    p, q, r, s = 0, 1, 2, 3
+    tuples = [(p, q), (q, r), (p, s), (q, s), (r, s)]
+    return _get_graph_from_tuples(tuples)
+
+
+def assert_rotated_and_rendered_tetrahedron_model(rendered: Model,
+                                                  msg: Optional[str] = None):
+    expected_graphs = [
+        _get_expected_tetrahedron_graph_bottom(),
+        _get_expected_tetrahedron_graph_top(),
+        _get_expected_tetrahedron_graph_side()
+    ]
+    _assert_rotated_and_rendered_model(rendered, expected_graphs, msg)
+
+
+def test_rotated_and_rendered_cube_tetrahedron_model():
+    _test_rotated_and_rendered_model(
+        get_rotated_and_rendered_tetrahedron_model,
+        assert_rotated_and_rendered_tetrahedron_model)

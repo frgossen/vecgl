@@ -1,5 +1,5 @@
 from functools import reduce
-from math import acos, copysign, cos, inf, isfinite, sin, sqrt
+from math import acos, copysign, cos, inf, isfinite, pi, sin, sqrt, tan
 from operator import add, sub
 from typing import Callable, List, Tuple, Union
 
@@ -58,6 +58,10 @@ def uniform_vec2(a: float) -> Vec2:
     return a, a
 
 
+def null_vec2(a: float) -> Vec2:
+    return uniform_vec2(0.0)
+
+
 def is_eps_eq_vec2(u: Vec2, v: Vec2, eps: float = kDefaultEps):
     ux, uy = u
     vx, vy = v
@@ -65,7 +69,7 @@ def is_eps_eq_vec2(u: Vec2, v: Vec2, eps: float = kDefaultEps):
 
 
 def is_null_vec2(u: Vec2, eps: float = kDefaultEps) -> bool:
-    return is_eps_eq_vec2(u, uniform_vec2(0), eps)
+    return is_eps_eq_vec2(u, null_vec2(), eps)
 
 
 def scale_vec2(a: float, u: Vec2) -> Vec2:
@@ -188,6 +192,10 @@ def uniform_vec3(a: float) -> Vec3:
     return a, a, a
 
 
+def null_vec3() -> Vec3:
+    return uniform_vec3(0.0)
+
+
 def is_eps_eq_vec3(u: Vec3, v: Vec3, eps: float = kDefaultEps):
     ux, uy, uz = u
     vx, vy, vz = v
@@ -195,7 +203,7 @@ def is_eps_eq_vec3(u: Vec3, v: Vec3, eps: float = kDefaultEps):
 
 
 def is_null_vec3(u: Vec3, eps: float = kDefaultEps) -> bool:
-    return is_eps_eq_vec3(u, uniform_vec3(0.0), eps)
+    return is_eps_eq_vec3(u, null_vec3(), eps)
 
 
 def scale_vec3(a: float, u: Vec3) -> Vec3:
@@ -368,6 +376,19 @@ def get_rotate_z_mat4(da: float) -> Mat4:
         (0.0, 0.0, 1.0, 0.0),
         (0.0, 0.0, 0.0, 1.0),
     )
+
+
+def get_rotate_mat4(dx: float, dy: float, dz: float) -> Mat4:
+    return mul_mat4(get_rotate_z_mat4(dx), get_rotate_y_mat4(dy),
+                    get_rotate_x_mat4(dz))
+
+
+def get_lrbt_from_aspect(aspect, a=1.0):
+    l = -a * min(aspect, 1.0)
+    r = -l
+    b = -a * min(1.0 / aspect, 1.0)
+    t = -b
+    return l, r, b, t
 
 
 def get_ortho_mat4(l: float, r: float, b: float, t: float, n: float,
