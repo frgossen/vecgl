@@ -17,7 +17,7 @@ show_interactively(cube, perspective_update_fn())
 # Define the view and the projection matrices.
 view_mat4 = mul_mat4(
     get_translate_mat4(0.0, 0.0, -3.0),
-    get_rotate_x_mat4(0.2 * pi),
+    get_rotate_x_mat4(-0.2 * pi),
     get_rotate_y_mat4(0.15 * pi),
 )
 projection_mat4 = get_frustum_mat4(-1.0, 1.0, -1.0, 1.0, 1.0, 100.0)

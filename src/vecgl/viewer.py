@@ -31,7 +31,7 @@ def _render_on_canvas(canvas: Canvas,
     if render_fn:
         model_in_ndc = render_fn(model_in_ndc)
     model_in_screen_coords = model_in_ndc.transform(
-        get_viewport_mat4(0.0, 0.0, width, height))
+        get_viewport_mat4(0.0, height, width, -height))
 
     # Draw the triangles first so that later drawn lines and points are visible.
     for tr in model_in_screen_coords.triangles:
@@ -91,12 +91,9 @@ def show(model_in_ndc: Model,
     frame.mainloop()
 
 
-def perspective_update_fn(fov: float = 1.0,
-                          n: float = 1.0,
-                          f: float = 100.0) -> Model:
+def perspective_update_fn(fov: float = 1.0, n: float = 1.0, f: float = 100.0) -> Callable[[Model, float, float, float, float], Model]:
 
-    def update(model: Model, aspect: float, hrotate: float, vrotate: float,
-               zoom: float) -> Model:
+    def update(model: Model, aspect: float, hrotate: float, vrotate: float, zoom: float) -> Model:
 
         # Perspective projection.
         l, r, b, t = get_lrbt_from_aspect(aspect, a=fov * n)
@@ -114,10 +111,9 @@ def perspective_update_fn(fov: float = 1.0,
     return update
 
 
-def ortho_update_fn(n: float = -100.0, f: float = 100.0):
+def ortho_update_fn(n: float = -100.0, f: float = 100.0) -> Callable[[Model, float, float, float, float], Model]:
 
-    def update(model: Model, aspect: float, hrotate: float, vrotate: float,
-               zoom: float) -> Model:
+    def update(model: Model, aspect: float, hrotate: float, vrotate: float, zoom: float) -> Model:
 
         # Orthogonal projection.
         a = 1.1**zoom
@@ -133,26 +129,25 @@ def ortho_update_fn(n: float = -100.0, f: float = 100.0):
     return update
 
 
-def random_sample_fn(num_points=512, num_lines=512, num_triangles=0):
-    return lambda model: get_random_sample_model(model, num_points, num_lines,
-                                                 num_triangles)
+def random_sample_fn(num_points:int=512, num_lines:int=512, num_triangles:int=0) -> Callable[[Model], Model ]:
+    return lambda model: get_random_sample_model(model, num_points, num_lines, num_triangles)
 
 
 def show_interactively(model: Model,
-                       update_fn: Callable[[Model, float, float, float, float],
-                                           Model],
+                       update_fn: Callable[[Model, float, float, float, float],Model],
                        height: int = kDefaultHeight,
                        width: int = kDefaultWidth,
                        stroke_width: int = kDefaultStrokeWidth,
                        render_fn: Optional[Callable[[Model], Model]] = render,
-                       sample_fn: Optional[Callable[
-                           [Model], Model]] = random_sample_fn(),
+                       sample_fn: Optional[Callable[ [Model], Model]] = random_sample_fn(),
                        hrotate: float = 0.0,
                        vrotate: float = 0.0,
                        zoom: float = 6.0) -> None:
 
     # Get sample model for quick rendering.
-    sample_model = sample_fn(model)
+    sample_model = model 
+    if sample_fn is not None: 
+        sample_model = sample_fn(model)
 
     # Create a canvas.
     frame = Tk()
@@ -206,7 +201,7 @@ def show_interactively(model: Model,
     def on_motion(e):
         nonlocal x0, y0, hrotate, dhrotate, vrotate, dvrotate
         hrotate += (e.x - x0) * dhrotate
-        vrotate = max(-1.0, min(vrotate + (e.y - y0) * dvrotate, 1.0))
+        vrotate = max(-1.0, min(vrotate - (e.y - y0) * dvrotate, 1.0))
         x0, y0 = e.x, e.y
         quick_update_canvas()
 
