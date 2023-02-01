@@ -1,7 +1,7 @@
 from math import cos, pi, sin, sqrt
 from typing import List
-from vecgl.linalg import Vec3
 
+from vecgl.linalg import Vec3
 from vecgl.model import Model, kDefaultLineColor, kDefaultSurfaceColor
 
 
