@@ -1,8 +1,8 @@
-name: Test
+name: Post-commit
 on: [push]
 jobs:
   test:
-    name: Build and test
+    name: Test
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -16,6 +16,8 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: ${GITHUB_WORKSPACE}/ci/init.sh
+      - name: Lint (isort)
+        run: ${GITHUB_WORKSPACE}/ci/isort.sh
       - name: Test
         run: ${GITHUB_WORKSPACE}/ci/pytest.sh
 

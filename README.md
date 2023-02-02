@@ -6,7 +6,7 @@ set of points, lines, and triangles - not a pixelated image. These geometric
 primitives can be used to generate vector graphics or to drive
 [pen plotters](https://www.generativehut.com/post/axidraw).
 
-![Test status](https://github.com/frgossen/vecgl/actions/workflows/test.yml/badge.svg)
+![Test status](https://github.com/frgossen/vecgl/actions/workflows/post_commit.yml/badge.svg)
 
 ## Getting started
 

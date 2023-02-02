@@ -1,7 +1,7 @@
 from math import pi
 
 from vecgl.export import write_svg
-from vecgl.linalg import (get_frustum_mat4, get_rotate_x_mat4,
+from vecgl.linalg import (get_frustum_mat4,   get_rotate_x_mat4,
                           get_rotate_y_mat4, get_translate_mat4, mul_mat4)
 from vecgl.modellib import get_cube_model
 from vecgl.rendering import render
