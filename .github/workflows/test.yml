@@ -1,7 +1,7 @@
-name: Build and test
+name: Test
 on: [push]
 jobs:
-  build-and-test:
+  test:
     name: Build and test
     runs-on: ubuntu-latest
     strategy:
