@@ -18,7 +18,7 @@ def to_svg(
 ) -> Iterator[str]:
 
     # Transform to canvas space.
-    model = model.transform(get_viewport_mat4(0.0, 0.0, width, height))
+    model = model.transform(get_viewport_mat4(0.0, height, width, -height))
 
     yield f"<svg version=\"1.1\" width=\"{width}\" height=\"{height}\" xmlns=\"http://www.w3.org/2000/svg\">\n"
 

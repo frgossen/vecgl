@@ -10,11 +10,11 @@ def test_to_svg():
                        "blue")
     model.add_point((-0.5, -0.5, 0.5), "hidden")
     expected = [
-        "<svg version=\"1.1\" width=\"300\" height=\"400\" xmlns=\"http://www.w3.org/2000/svg\">\n",
-        "  <polygon points=\"0.0,0.0 300.0,0.0 0.0,400.0\" fill=\"blue\"/>\n",
-        "  <line x1=\"0.0\" y1=\"200.0\" x2=\"300.0\" y2=\"400.0\" stroke=\"green\" stroke-linecap=\"round\" stroke-width=\"1\"/>\n",
-        "  <circle cx=\"225.0\" cy=\"400.0\" r=\"0.5\" fill=\"green\"/>\n",
-        "  <circle cx=\"75.0\" cy=\"100.0\" r=\"0.5\" fill=\"green\"/>\n",
+        "<svg version=\"1.1\" width=\"300\" height=\"400\" xmlns=\"http://www.w3.org/2000/svg\">\n", 
+        "  <polygon points=\"0.0,400.0 300.0,400.0 0.0,0.0\" fill=\"blue\"/>\n", 
+        "  <line x1=\"0.0\" y1=\"200.0\" x2=\"300.0\" y2=\"0.0\" stroke=\"green\" stroke-linecap=\"round\" stroke-width=\"1\"/>\n", 
+        "  <circle cx=\"225.0\" cy=\"0.0\" r=\"0.5\" fill=\"green\"/>\n", 
+        "  <circle cx=\"75.0\" cy=\"300.0\" r=\"0.5\" fill=\"green\"/>\n", 
         "</svg>\n"
     ]
     actual = list(to_svg(model, 400, 300))
