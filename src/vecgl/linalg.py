@@ -383,7 +383,7 @@ def get_rotate_mat4(dx: float, dy: float, dz: float) -> Mat4:
                     get_rotate_x_mat4(dz))
 
 
-def get_lrbt_from_aspect(aspect:float, a:float =1.0):
+def get_lrbt_from_aspect(aspect: float, a: float = 1.0):
     l = -a * min(aspect, 1.0)
     r = -l
     b = -a * min(1.0 / aspect, 1.0)

@@ -91,9 +91,14 @@ def show(model_in_ndc: Model,
     frame.mainloop()
 
 
-def perspective_update_fn(fov: float = 1.0, n: float = 1.0, f: float = 100.0) -> Callable[[Model, float, float, float, float], Model]:
+def perspective_update_fn(
+        fov: float = 1.0,
+        n: float = 1.0,
+        f: float = 100.0
+) -> Callable[[Model, float, float, float, float], Model]:
 
-    def update(model: Model, aspect: float, hrotate: float, vrotate: float, zoom: float) -> Model:
+    def update(model: Model, aspect: float, hrotate: float, vrotate: float,
+               zoom: float) -> Model:
 
         # Perspective projection.
         l, r, b, t = get_lrbt_from_aspect(aspect, a=fov * n)
@@ -111,9 +116,13 @@ def perspective_update_fn(fov: float = 1.0, n: float = 1.0, f: float = 100.0) ->
     return update
 
 
-def ortho_update_fn(n: float = -100.0, f: float = 100.0) -> Callable[[Model, float, float, float, float], Model]:
+def ortho_update_fn(
+        n: float = -100.0,
+        f: float = 100.0
+) -> Callable[[Model, float, float, float, float], Model]:
 
-    def update(model: Model, aspect: float, hrotate: float, vrotate: float, zoom: float) -> Model:
+    def update(model: Model, aspect: float, hrotate: float, vrotate: float,
+               zoom: float) -> Model:
 
         # Orthogonal projection.
         a = 1.1**zoom
@@ -129,24 +138,29 @@ def ortho_update_fn(n: float = -100.0, f: float = 100.0) -> Callable[[Model, flo
     return update
 
 
-def random_sample_fn(num_points:int=512, num_lines:int=512, num_triangles:int=0) -> Callable[[Model], Model ]:
-    return lambda model: get_random_sample_model(model, num_points, num_lines, num_triangles)
+def random_sample_fn(num_points: int = 512,
+                     num_lines: int = 512,
+                     num_triangles: int = 0) -> Callable[[Model], Model]:
+    return lambda model: get_random_sample_model(model, num_points, num_lines,
+                                                 num_triangles)
 
 
 def show_interactively(model: Model,
-                       update_fn: Callable[[Model, float, float, float, float],Model],
+                       update_fn: Callable[[Model, float, float, float, float],
+                                           Model],
                        height: int = kDefaultHeight,
                        width: int = kDefaultWidth,
                        stroke_width: int = kDefaultStrokeWidth,
                        render_fn: Optional[Callable[[Model], Model]] = render,
-                       sample_fn: Optional[Callable[ [Model], Model]] = random_sample_fn(),
+                       sample_fn: Optional[Callable[
+                           [Model], Model]] = random_sample_fn(),
                        hrotate: float = 0.0,
                        vrotate: float = 0.0,
                        zoom: float = 6.0) -> None:
 
     # Get sample model for quick rendering.
-    sample_model = model 
-    if sample_fn is not None: 
+    sample_model = model
+    if sample_fn is not None:
         sample_model = sample_fn(model)
 
     # Create a canvas.

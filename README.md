@@ -1,12 +1,12 @@
 # VecGL
 
+![Test status](https://github.com/frgossen/vecgl/actions/workflows/post_commit.yml/badge.svg)
+
 __*VecGL* is a 3D rendering engine with vector output.__
 It is inspired by OpenGL with the key difference that the rendering result is a
 set of points, lines, and triangles - not a pixelated image. These geometric
 primitives can be used to generate vector graphics or to drive
 [pen plotters](https://www.generativehut.com/post/axidraw).
-
-![Test status](https://github.com/frgossen/vecgl/actions/workflows/post_commit.yml/badge.svg)
 
 ## Getting started
 
