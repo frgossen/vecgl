@@ -17,5 +17,5 @@ jobs:
       - name: Install dependencies
         run: ${GITHUB_WORKSPACE}/ci/init.sh
       - name: Test
-        run: pytest test
+        run: ${GITHUB_WORKSPACE}/ci/pytest.sh
 
