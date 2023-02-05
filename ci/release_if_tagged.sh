@@ -1,8 +1,6 @@
 #!/bin/bash
 
-set -e
-
-PYPI_API_TOKEN=$1
+set -ex
 
 # Release only if this commit is tagged with a version of the form `v.0.0.1`.
 HAS_VERSION_TAG=0
@@ -17,4 +15,4 @@ fi
 
 # Upload to PyPI
 python -m twine check dist/*
-python -m twine upload dist/* -u="__token__" -p="$PYPI_API_TOKEN"
+python -m twine upload dist/* -u=__token__ -p=$PYPI_API_TOKEN

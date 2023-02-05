@@ -1,5 +1,5 @@
 #!/bin/bash
 
-set -e
+set -ex
 
 python -m pytest test --benchmark-skip

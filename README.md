@@ -79,17 +79,12 @@ $ python3 -m venv .venv
 $ source .venv/bin/activate
 ```
 
-Install all requirements in the virtual environment.
-
-```
-$ python3 -m pip install -r requirements.txt
-```
-
 Install the `vecgl` package in editable mode.
 This makes the package (and your changes) available when running the tests.
+Also, install the development dependencies, e.g. `pytest` to run the tests.
 
 ```
-$ python3 -m pip install --editable .
+$ python3 -m pip install --editable .[lint,test,release]
 ```
 
 You're all set for contributing back to the project.
