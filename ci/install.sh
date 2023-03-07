@@ -3,4 +3,4 @@
 set -ex
 
 python -m pip install --upgrade pip
-python -m pip install .[lint,test,release]
+python -m pip install --editable .[lint,test,release]
