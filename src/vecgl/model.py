@@ -82,12 +82,18 @@ class Model:
 
     def add_line_chain(self,
                        ps: Iterable[Union[Vec3, Vec4]],
-                       color: str = kDefaultLineColor):
+                       color: str = kDefaultLineColor,
+                       closed=False):
+        p_fst = None
         p = None
         for q in ps:
+            if p_fst is None:
+                p_fst = p
             if p is not None:
                 self.add_line(p, q, color)
             p = q
+        if closed:
+            self.add_line(p, p_fst, color)
 
     def add_triangle(
         self,
