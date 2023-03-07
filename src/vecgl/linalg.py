@@ -1,5 +1,5 @@
 from functools import reduce
-from math import acos, copysign, cos, inf, isfinite, pi, sin, sqrt, tan
+from math import acos, atan2, copysign, cos, inf, isfinite, sin, sqrt
 from operator import add, sub
 from typing import Callable, List, Tuple, Union
 
@@ -10,7 +10,7 @@ Mat2 = Tuple[Vec2, Vec2]
 Mat3 = Tuple[Vec3, Vec3, Vec3]
 Mat4 = Tuple[Vec4, Vec4, Vec4, Vec4]
 
-kDefaultEps = 0.00000001
+kDefaultEps = 0.000001
 
 # 2D cartesian coordinates.
 
@@ -58,18 +58,18 @@ def uniform_vec2(a: float) -> Vec2:
     return a, a
 
 
-def null_vec2(a: float) -> Vec2:
+def null_vec2() -> Vec2:
     return uniform_vec2(0.0)
 
 
-def is_eps_eq_vec2(u: Vec2, v: Vec2, eps: float = kDefaultEps):
+def is_eq_vec2(u: Vec2, v: Vec2, eps: float = kDefaultEps):
     ux, uy = u
     vx, vy = v
     return abs(ux - vx) < eps and abs(uy - vy) < eps
 
 
 def is_null_vec2(u: Vec2, eps: float = kDefaultEps) -> bool:
-    return is_eps_eq_vec2(u, null_vec2(), eps)
+    return is_eq_vec2(u, null_vec2(), eps)
 
 
 def scale_vec2(a: float, u: Vec2) -> Vec2:
@@ -115,6 +115,13 @@ def angle_vec2(u: Vec2, v: Vec2) -> float:
     return acos(dot_vec2(u, v) / (norm2_vec2(u) * norm2_vec2(v)))
 
 
+def cwise_angle_vec2(u: Vec2, v: Vec2) -> float:
+    ux, uy = u
+    vx, vy = v
+    angle = atan2(uy * vx - ux * vy, ux * vx + uy * vy)
+    return angle
+
+
 def unit_vec2(u: Vec2) -> Vec2:
     return scale_vec2(1.0 / norm2_vec2(u), u)
 
@@ -139,6 +146,12 @@ def right_of_vec2(u: Vec2, v: Vec2) -> bool:
 
 def left_of_vec2(u: Vec2, v: Vec2) -> bool:
     return dot_vec2(u, left_ortho_vec2(v)) > 0
+
+
+def is_colinear_vec2(u: Vec2, v: Vec2, eps: float = kDefaultEps) -> bool:
+    ux, uy = u
+    vx, vy = v
+    return abs(ux * vy - uy * vx) < eps
 
 
 # 3D cartesian coordinates.
@@ -196,14 +209,14 @@ def null_vec3() -> Vec3:
     return uniform_vec3(0.0)
 
 
-def is_eps_eq_vec3(u: Vec3, v: Vec3, eps: float = kDefaultEps):
+def is_eq_vec3(u: Vec3, v: Vec3, eps: float = kDefaultEps):
     ux, uy, uz = u
     vx, vy, vz = v
     return abs(ux - vx) <= eps and abs(uy - vy) <= eps and abs(uz - vz) <= eps
 
 
 def is_null_vec3(u: Vec3, eps: float = kDefaultEps) -> bool:
-    return is_eps_eq_vec3(u, null_vec3(), eps)
+    return is_eq_vec3(u, null_vec3(), eps)
 
 
 def scale_vec3(a: float, u: Vec3) -> Vec3:
@@ -257,6 +270,10 @@ def angle_vec3(u: Vec3, v: Vec3) -> float:
 
 def unit_vec3(u: Vec3) -> Vec3:
     return scale_vec3(1.0 / norm2_vec3(u), u)
+
+
+def is_colinear_vec3(u: Vec3, v: Vec3, eps: float = kDefaultEps) -> bool:
+    return is_null_vec3(cross_vec3(u, v), eps)
 
 
 # Homogenious coordinates.
@@ -340,6 +357,18 @@ def get_scale_mat4(ax: float, ay: float, az: float) -> Mat4:
         (0.0, 0.0, az, 0.0),
         (0.0, 0.0, 0.0, 1.0),
     )
+
+
+def get_scale_x_mat4(ax: float) -> Mat4:
+    return get_scale_mat4(ax, 1.0, 1.0)
+
+
+def get_scale_y_mat4(ay: float) -> Mat4:
+    return get_scale_mat4(1.0, ay, 1.0)
+
+
+def get_scale_z_mat4(az: float) -> Mat4:
+    return get_scale_mat4(1.0, 1.0, az)
 
 
 def get_translate_mat4(dx: float, dy: float, dz: float) -> Mat4:
