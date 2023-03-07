@@ -3,7 +3,6 @@ from typing import Iterator
 
 from vecgl.linalg import Vec4, get_viewport_mat4, homogenious_vec4_to_vec3
 from vecgl.model import Model
-from vecgl.rendering import render
 
 kDefaultWidth = 600
 kDefaultHeight = 600

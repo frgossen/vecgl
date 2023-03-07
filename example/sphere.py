@@ -5,14 +5,15 @@ from vecgl.linalg import (get_frustum_mat4, get_rotate_x_mat4,
                           get_rotate_y_mat4, get_translate_mat4, mul_mat4)
 from vecgl.modellib import get_sphere_model
 from vecgl.rendering import render
-from vecgl.viewer import perspective_update_fn, show, show_interactively
+from vecgl.viewer import show, show_interactively
 
 # Get a predefined sphere model and choose nice colors.
 # The sphere will span from -1.0 to 1.0 in all dimensions.
 sphere = get_sphere_model(16, 32, "lightblue", "black")
+simple_sphere = get_sphere_model(4, 8, "lightblue", "black")
 
 # Look at the model interactively.
-show_interactively(sphere, perspective_update_fn())
+show_interactively(sphere, simple_model=simple_sphere)
 
 # Define the view and the projection transforms.
 view_mat4 = mul_mat4(
