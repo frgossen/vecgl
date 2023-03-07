@@ -39,9 +39,9 @@ def test_render_random_lines():
         assert is_in_cipping_space(ln.q)
 
 
-def _test_rotated_perspective_rendering(
-    model: Model, expected_line_graphs: Iterable[Graph], n: int = 512
-):
+def _test_rotated_perspective_rendering(model: Model,
+                                        expected_line_graphs: Iterable[Graph],
+                                        n: int = 512):
     for _ in range(n):
         ax, ay, az = get_random_angle(), get_random_angle(), get_random_angle()
         rendered = get_rotated_perspective_rendering(model, ax, ay, az)

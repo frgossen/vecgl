@@ -23,7 +23,7 @@ def _get_permutations(n: int) -> Iterator[Tuple[int]]:
         return
     for perm in _get_permutations(n - 1):
         for i in range(n):
-            yield perm[:i] + (n - 1,) + perm[i:]
+            yield perm[:i] + (n - 1, ) + perm[i:]
 
 
 def _is_isomorph_graph_given_perm(
@@ -70,11 +70,9 @@ def _is_isomorph_graph(graph: Graph, other_graph: Graph):
     idxs = {nodes[i]: i for i in range(n)}
     other_idxs = {other_nodes[i]: i for i in range(n)}
     return any(
-        _is_isomorph_graph_given_perm(
-            graph, nodes, idxs, other_graph, other_nodes, other_idxs, perm
-        )
-        for perm in _get_permutations(n)
-    )
+        _is_isomorph_graph_given_perm(graph, nodes, idxs, other_graph,
+                                      other_nodes, other_idxs, perm)
+        for perm in _get_permutations(n))
 
 
 def get_graph_from_tuples(tuples: Iterable[Tuple[Any, Any]]) -> Graph:
@@ -85,11 +83,12 @@ def get_graph_from_tuples(tuples: Iterable[Tuple[Any, Any]]) -> Graph:
     return graph
 
 
-def assert_line_graph(
-    model: Model, expected_graphs: Iterable[Graph], msg: Optional[str] = None
-):
+def assert_line_graph(model: Model,
+                      expected_graphs: Iterable[Graph],
+                      msg: Optional[str] = None):
     actual_graph = _get_line_graph(model)
-    assert any(_is_isomorph_graph(actual_graph, g) for g in expected_graphs), msg
+    assert any(_is_isomorph_graph(actual_graph, g)
+               for g in expected_graphs), msg
 
 
 def _get_expected_cube_graph_4() -> Graph:
@@ -130,7 +129,8 @@ def _get_expected_cube_graph_7() -> Graph:
     #   s ----- r
     #
     p, q, r, s, t, u, v = 0, 1, 2, 3, 4, 5, 6
-    tuples = [(p, q), (q, r), (r, s), (s, p), (p, t), (t, u), (u, q), (u, v), (v, r)]
+    tuples = [(p, q), (q, r), (r, s), (s, p), (p, t), (t, u), (u, q), (u, v),
+              (v, r)]
     return get_graph_from_tuples(tuples)
 
 

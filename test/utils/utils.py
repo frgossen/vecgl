@@ -11,9 +11,11 @@ def is_in_cipping_space(p: Vec4, eps: float = kDefaultEps):
     return all(-1.0 - eps <= a and a <= 1.0 + eps for a in p3)
 
 
-def get_rotated_perspective_rendering(
-    model: Model, ax: float, ay: float, az: float, tz: float = -3.0
-):
+def get_rotated_perspective_rendering(model: Model,
+                                      ax: float,
+                                      ay: float,
+                                      az: float,
+                                      tz: float = -3.0):
     view_mat4 = mul_mat4(
         get_translate_mat4(0.0, 0.0, tz),
         get_rotate_x_mat4(ax),

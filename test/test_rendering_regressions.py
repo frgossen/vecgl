@@ -162,9 +162,8 @@ def test_regression_render_partial_cube_2():
 def test_regression_render_partial_cube_3():
     model = Model()
     model.add_line((1.36, 1.00, 1.45, 3.40), (0.40, 1.00, -0.34, 1.64))
-    model.add_triangle(
-        (-0.40, 1.00, 2.42, 4.36), (1.36, 1.00, 1.45, 3.40), (-1.36, 1.00, 0.63, 2.60)
-    )
+    model.add_triangle((-0.40, 1.00, 2.42, 4.36), (1.36, 1.00, 1.45, 3.40),
+                       (-1.36, 1.00, 0.63, 2.60))
     rendered = render(model)
     assert len(rendered.lines) == 1
     assert len(rendered.triangles) == 1
