@@ -2,6 +2,10 @@
 
 set -ex
 
+python -m autoflake -ir example/*.py
+python -m autoflake -ir src
+python -m autoflake -ir test
+
 python -m isort example/*.py
 python -m isort src
 python -m isort test
