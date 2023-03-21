@@ -2,6 +2,8 @@ from test.utils.graphisomorphism import (
     assert_line_graph, get_expected_line_graphs_for_rendered_cube)
 from test.utils.utils import get_rotated_perspective_rendering
 
+from pytest import approx
+
 from vecgl.model import Model
 from vecgl.modellib import get_cube_model
 from vecgl.rendering import render
@@ -232,3 +234,16 @@ def test_regression_render_partial_cube_5():
     assert_line_graph(rendered, get_expected_line_graphs_for_rendered_cube())
     assert len(rendered.lines) == 7
     assert len(rendered.triangles) == 1
+
+
+def test_regression_render_partial_cube_6():
+    model = Model()
+    model.add_line((0.046, -0.021, 0.986), (0.064, -0.028, 0.986))
+    model.add_triangle((0.065, -0.001, 0.985), (0.045, -0.045, 0.985),
+                       (0.046, -0.018, 0.984))
+    rendered = render(model)
+    assert len(rendered.triangles) == 1
+    assert len(rendered.lines) == 1
+    assert rendered.lines[0].p == approx(
+        (0.0544206008583691, -0.024274678111587983, 0.986, 1.0))
+    assert rendered.lines[0].q == approx((0.064, -0.028, 0.986, 1.0))

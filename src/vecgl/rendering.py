@@ -5,8 +5,8 @@ from vecgl.linalg import (Vec3, add_vec3, cross_vec3, dot_vec3,
                           homogenious_vec4_to_vec3, is_finite_vec3,
                           kDefaultEps, max_vec3, min_vec3, norm2_vec3,
                           ortho_vec2, right_of_vec2, scale_vec3, sub_vec2,
-                          sub_vec3, vec3_to_homogenious_vec4, vec3_to_xy_vec2,
-                          xy_vec2_to_vec3, z_vec3)
+                          sub_vec3, unit_vec3, vec3_to_homogenious_vec4,
+                          vec3_to_xy_vec2, xy_vec2_to_vec3, z_vec3)
 from vecgl.model import Line, Model, Point, Triangle
 
 Plane3 = Tuple[Vec3, Vec3]
@@ -42,7 +42,7 @@ def _get_triangle_front_plane(tr: Triangle) -> Plane3:
         n = scale_vec3(-1.0, n)
 
     # Return the front boundary plane of the triangle.
-    return p, n
+    return p, unit_vec3(n)
 
 
 def _get_triangle_side_planes(tr: Triangle) -> Iterator[Plane3]:
@@ -66,15 +66,15 @@ def _get_triangle_side_planes(tr: Triangle) -> Iterator[Plane3]:
     # Collect the three boundary planes per side of the triangle.
     n_pq2 = ortho_vec2(pq2, normals_to_the_right)
     n_pq = xy_vec2_to_vec3(n_pq2, 0.0)
-    yield p, n_pq
+    yield p, unit_vec3(n_pq)
     qr2 = sub_vec2(r2, q2)
     n_qr2 = ortho_vec2(qr2, normals_to_the_right)
     n_qr = xy_vec2_to_vec3(n_qr2, 0.0)
-    yield q, n_qr
+    yield q, unit_vec3(n_qr)
     rp2 = sub_vec2(p2, r2)
     n_rp2 = ortho_vec2(rp2, normals_to_the_right)
     n_rp = xy_vec2_to_vec3(n_rp2, 0.0)
-    yield r, n_rp
+    yield r, unit_vec3(n_rp)
 
 
 def _get_relevant_triangles_query(bb: BoundingBox3) -> BoundingBox3:
