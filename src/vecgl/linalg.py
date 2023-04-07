@@ -269,7 +269,10 @@ def angle_vec3(u: Vec3, v: Vec3) -> float:
 
 
 def unit_vec3(u: Vec3) -> Vec3:
-    return scale_vec3(1.0 / norm2_vec3(u), u)
+    norm2 = norm2_vec3(u)
+    if abs(norm2) < kDefaultEps:
+        return None
+    return scale_vec3(1.0 / norm2, u)
 
 
 def is_colinear_vec3(u: Vec3, v: Vec3, eps: float = kDefaultEps) -> bool:

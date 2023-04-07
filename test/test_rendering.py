@@ -276,3 +276,11 @@ def test_rendering_empty_line():
                        (0.243, 0.609, -0.207))
     rendered = render(model)
     assert len(rendered.lines) == 0
+
+
+def test_rendering_bas_triangle():
+    model = Model()
+    model.add_line((-0.5, -0.5, 0.0), (0.5, 0.5, 0.0))
+    model.add_triangle((-0.5, 0.5, -0.1), (0.5, -0.5, -0.1), (-0.1, 0.1, -0.1))
+    rendered = render(model)
+    assert len(rendered.lines) == 1

@@ -1,4 +1,4 @@
-from typing import Iterable, Iterator, List, Tuple
+from typing import Iterable, Iterator, List, Optional, Tuple
 
 from vecgl.bb3tree import BB3Tree, BoundingBox3, create_bb3tree
 from vecgl.linalg import (Vec3, add_vec3, cross_vec3, dot_vec3,
@@ -27,7 +27,7 @@ def _get_clipping_space_planes() -> Iterator[Plane3]:
             yield pl
 
 
-def _get_triangle_front_plane(tr: Triangle) -> Plane3:
+def _get_triangle_front_plane(tr: Triangle) -> Optional[Plane3]:
     p, q, r = tr.p, tr.q, tr.r
 
     # Do this in non-homogenious coordinates.
@@ -40,9 +40,12 @@ def _get_triangle_front_plane(tr: Triangle) -> Plane3:
     n = cross_vec3(pq, pr)
     if z_vec3(n) > 0.0:
         n = scale_vec3(-1.0, n)
+    n = unit_vec3(n)
+    if n is None:
+        return None
 
     # Return the front boundary plane of the triangle.
-    return p, unit_vec3(n)
+    return p, n
 
 
 def _get_triangle_side_planes(tr: Triangle) -> Iterator[Plane3]:
@@ -66,15 +69,21 @@ def _get_triangle_side_planes(tr: Triangle) -> Iterator[Plane3]:
     # Collect the three boundary planes per side of the triangle.
     n_pq2 = ortho_vec2(pq2, normals_to_the_right)
     n_pq = xy_vec2_to_vec3(n_pq2, 0.0)
-    yield p, unit_vec3(n_pq)
+    n_pq = unit_vec3(n_pq)
+    if n_pq is not None:
+        yield p, n_pq
     qr2 = sub_vec2(r2, q2)
     n_qr2 = ortho_vec2(qr2, normals_to_the_right)
     n_qr = xy_vec2_to_vec3(n_qr2, 0.0)
-    yield q, unit_vec3(n_qr)
+    n_qr = unit_vec3(n_qr)
+    if n_qr is not None:
+        yield q, n_qr
     rp2 = sub_vec2(p2, r2)
     n_rp2 = ortho_vec2(rp2, normals_to_the_right)
     n_rp = xy_vec2_to_vec3(n_rp2, 0.0)
-    yield r, unit_vec3(n_rp)
+    n_rp = unit_vec3(n_rp)
+    if n_rp is not None:
+        yield r, n_rp
 
 
 def _get_relevant_triangles_query(bb: BoundingBox3) -> BoundingBox3:
@@ -291,6 +300,9 @@ def _get_visible_line_fragments_wrt_triangle(ln: Line,
 
     # Analyse visibility wrt. the triangle plane.
     front_pl = _get_triangle_front_plane(tr)
+    if not front_pl:
+        yield tr
+        return
     is_front, faction = _get_visible_line_fraction_wrt_plane(
         front_pl, p, q, is_visible_on_plane=True)
     if is_front:
