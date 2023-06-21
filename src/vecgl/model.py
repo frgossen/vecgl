@@ -117,6 +117,18 @@ class Model:
             p = q
             q = r
 
+    def add_triangle_fan(self,
+                         ps: Iterable[Union[Vec3, Vec4]],
+                         color: str = kDefaultSurfaceColor):
+        p, q = None, None
+        for r in ps:
+            if p is None:
+                p = r
+            else:
+                if q is not None:
+                    self.add_triangle(p, q, r, color)
+                q = r
+
     def add_model(self, model: "Model"):
         self.points += model.points
         self.lines += model.lines

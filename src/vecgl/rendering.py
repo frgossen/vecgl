@@ -300,8 +300,8 @@ def _get_visible_line_fragments_wrt_triangle(ln: Line,
 
     # Analyse visibility wrt. the triangle plane.
     front_pl = _get_triangle_front_plane(tr)
-    if not front_pl:
-        yield tr
+    if front_pl is None:
+        yield ln
         return
     is_front, faction = _get_visible_line_fraction_wrt_plane(
         front_pl, p, q, is_visible_on_plane=True)
@@ -312,6 +312,8 @@ def _get_visible_line_fragments_wrt_triangle(ln: Line,
 
     # Analyse visibility wrt. the remaining boundary planes.
     for boundary_pl in _get_triangle_side_planes(tr):
+        if boundary_pl is None:
+            continue
         is_front, fraction = _get_visible_line_fraction_wrt_plane(
             boundary_pl, p, q, is_visible_on_plane=False)
         if is_front:

@@ -247,3 +247,27 @@ def test_regression_render_partial_cube_6():
     assert rendered.lines[0].p == approx(
         (0.0544206008583691, -0.024274678111587983, 0.986, 1.0))
     assert rendered.lines[0].q == approx((0.064, -0.028, 0.986, 1.0))
+
+
+def test_regression_render_leaf():
+    model = Model()
+    model.add_line((-0.0, 0.0, 0.0),
+                   (-0.35355339059327373, 0.3535533905932738, 0.0))
+    model.add_line((-0.35355339059327373, 0.3535533905932738, 0.0),
+                   (0.0, 1.0, 0.0))
+    model.add_line((0.0, 1.0, 0.0),
+                   (0.35355339059327373, 0.3535533905932738, 0.0))
+    model.add_line((0.35355339059327373, 0.3535533905932738, 0.0),
+                   (0.0, 0.0, 0.0))
+    model.add_line((0.0, 0.0, 0.0), (-0.0, 0.0, 0.0))
+    model.add_triangle((-0.0, 0.0, 0.0),
+                       (-0.35355339059327373, 0.3535533905932738, 0.0),
+                       (0.0, 1.0, 0.0))
+    model.add_triangle((-0.0, 0.0, 0.0), (0.0, 1.0, 0.0),
+                       (0.35355339059327373, 0.3535533905932738, 0.0))
+    model.add_triangle((-0.0, 0.0, 0.0),
+                       (0.35355339059327373, 0.3535533905932738, 0.0),
+                       (0.0, 0.0, 0.0))
+    rendered = render(model)
+    assert len(rendered.lines) == 4
+    assert len(rendered.triangles) == 3

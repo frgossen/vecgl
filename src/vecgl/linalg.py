@@ -411,8 +411,8 @@ def get_rotate_z_mat4(da: float) -> Mat4:
 
 
 def get_rotate_mat4(dx: float, dy: float, dz: float) -> Mat4:
-    return mul_mat4(get_rotate_z_mat4(dx), get_rotate_y_mat4(dy),
-                    get_rotate_x_mat4(dz))
+    return mul_mat4(get_rotate_x_mat4(dx), get_rotate_y_mat4(dy),
+                    get_rotate_z_mat4(dz))
 
 
 def get_lrbt_from_aspect(aspect: float, a: float = 1.0):

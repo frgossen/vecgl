@@ -2,5 +2,5 @@
 
 set -ex
 
-python -m pip install --upgrade pip
+python -m ensurepip --upgrade
 python -m pip install --editable .[lint,test,release]
