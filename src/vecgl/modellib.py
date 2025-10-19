@@ -1,7 +1,7 @@
-from math import cos, pi, sin, sqrt
+from math import acos, cos, pi, sin, sqrt
 from typing import List
 
-from vecgl.linalg import Vec3
+from vecgl.linalg import Vec3, add_vec3, scale_vec3
 from vecgl.model import Model, kDefaultLineColor, kDefaultSurfaceColor
 
 
@@ -182,4 +182,51 @@ def get_coordinate_system_model(color_x="red",
     model.add_line(origin, tip_x, color_x)
     model.add_line(origin, tip_y, color_y)
     model.add_line(origin, tip_z, color_z)
+    return model
+
+
+def get_heart_model(n: int = 32,
+                    surface_color: str = kDefaultSurfaceColor,
+                    line_color: str = kDefaultLineColor,
+                    surfaces: bool = False,
+                    lines: bool = True):
+    assert surfaces == False, "not impl"
+    model = Model()
+    ps = []
+    for i in range(n):
+        a = i / n * pi
+        p = -0.5 - 0.5 * cos(a), 0.5 + 0.5 * sin(a), 0.0
+        ps.append(p)
+    for i in range(n):
+        a = i / n * pi
+        p = 0.5 - 0.5 * cos(a), 0.5 + 0.5 * sin(a), 0.0
+        ps.append(p)
+    for i in range(n):
+        p = 1.0 - 1.0 * i / n, 0.5 - 2.5 * acos(1.0 - i / n) / pi, 0.0
+        ps.append(p)
+    for i in range(n):
+        p = -1.0 * i / n, 0.5 + -2.5 * acos(i / n) / pi, 0.0
+        ps.append(p)
+    if lines:
+        model.add_line_chain(ps, line_color, closed=True)
+    return model
+
+
+def get_diamond_model(surface_color: str = kDefaultSurfaceColor,
+                      line_color: str = kDefaultLineColor,
+                      surfaces: bool = True,
+                      lines: bool = True):
+    model = Model()
+    center = 0.0, 0.0, 0.0
+    p = -1.0, 0.0, 0.0
+    q = 0.0, 1.0, 0.0
+    r = 1.0, 0.0, 0.0
+    s = 0.0, -1.0, 0.0
+    if lines:
+        model.add_line_chain([p, q, r, s], line_color, closed=True)
+    if surfaces:
+        model.add_triangle(center, p, q, surface_color)
+        model.add_triangle(center, q, r, surface_color)
+        model.add_triangle(center, r, s, surface_color)
+        model.add_triangle(center, s, p, surface_color)
     return model

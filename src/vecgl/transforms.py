@@ -27,3 +27,21 @@ def get_random_sample_model(model: Model, num_points: int, num_lines: int,
     sample_model.triangles = sample(model.triangles,
                                     min(len(model.triangles), num_triangles))
     return sample_model
+
+
+def get_colorized_model(model: Model,
+                        color: str,
+                        points: bool = True,
+                        lines: bool = True,
+                        triangles: bool = True) -> Model:
+    colorized_model = Model()
+    if points:
+        for pt in model.points:
+            colorized_model.add_point(pt.p, color)
+    if lines:
+        for ln in model.lines:
+            colorized_model.add_line(ln.p, ln.q, color)
+    if triangles:
+        for tr in model.triangles:
+            colorized_model.add_triangle(tr.p, tr.q, tr.r, color)
+    return colorized_model

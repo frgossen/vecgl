@@ -19,12 +19,13 @@ def _render_on_canvas(canvas: Canvas,
                       model_in_ndc: Model,
                       height: int,
                       width: int,
+                      background_color: str,
                       stroke_width: int,
                       render_fn: Optional[Callable[[Model], Model]],
                       text: Optional[str] = None):
     # Clear canvas.
     coords = 0, 0, width + 1, 0, width + 1, height + 1, 0, height + 1
-    canvas.create_polygon(*coords, fill="white")
+    canvas.create_polygon(*coords, fill=background_color)
 
     # Render and transform to screen coordinates.
     if render_fn:
@@ -73,18 +74,19 @@ def _render_on_canvas(canvas: Canvas,
 def show(model_in_ndc: Model,
          height: int = kDefaultHeight,
          width: int = kDefaultWidth,
+         background_color: str = "white",
          stroke_width: int = kDefaultStrokeWidth,
          render_fn: Optional[Callable[[Model], Model]] = render) -> None:
 
     # Create a canvas.
     frame = Tk()
     frame.title("Viewer")
-    canvas = Canvas(frame, bg="white", height=height, width=width)
+    canvas = Canvas(frame, bg=background_color, height=height, width=width)
     canvas.pack()
 
     # Draw and enter loop.
-    _render_on_canvas(canvas, model_in_ndc, height, width, stroke_width,
-                      render_fn)
+    _render_on_canvas(canvas, model_in_ndc, height, width, background_color,
+                      stroke_width, render_fn)
     frame.mainloop()
 
 
@@ -153,6 +155,7 @@ def show_interactively(model: Model,
                                            Model] = ortho_update_fn(),
                        height: int = kDefaultHeight,
                        width: int = kDefaultWidth,
+                       background_color: str = "white",
                        stroke_width: int = kDefaultStrokeWidth,
                        render_fn: Optional[Callable[[Model], Model]] = render,
                        hrotate: float = 0.0,
@@ -180,7 +183,7 @@ def show_interactively(model: Model,
         nonlocal model, aspect, hrotate, vrotate, zoom, canvas, height, width
         transformed_model = update_fn(model, aspect, hrotate, vrotate, zoom)
         _render_on_canvas(canvas, transformed_model, height, width,
-                          stroke_width, render_fn)
+                          background_color, stroke_width, render_fn)
 
     def quick_update_canvas():
         nonlocal simple_model, aspect, hrotate, vrotate, zoom, canvas, height, width
@@ -190,7 +193,7 @@ def show_interactively(model: Model,
                                       zoom)
         text = "Press space to render"
         _render_on_canvas(canvas, transformed_model, height, width,
-                          stroke_width, render_fn, text)
+                          background_color, stroke_width, render_fn, text)
 
     def on_mouse_wheel_up(_):
         nonlocal zoom, dzoom
