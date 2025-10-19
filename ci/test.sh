@@ -2,4 +2,4 @@
 
 set -ex
 
-python -m pytest test --benchmark-skip
+python3 -m pytest test --benchmark-skip

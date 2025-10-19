@@ -14,5 +14,5 @@ if [[ $HAS_VERSION_TAG == 0 ]]; then
 fi
 
 # Upload to PyPI
-python -m twine check dist/*
-python -m twine upload dist/* -u=__token__ -p=$PYPI_API_TOKEN
+python3 -m twine check dist/*
+python3 -m twine upload dist/* -u=__token__ -p=$PYPI_API_TOKEN

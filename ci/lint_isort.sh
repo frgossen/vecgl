@@ -2,6 +2,6 @@
 
 set -ex
 
-python -m isort example/*.py --check-only
-python -m isort src --check-only
-python -m isort test --check-only
+python3 -m isort example/*.py --check-only
+python3 -m isort src --check-only
+python3 -m isort test --check-only

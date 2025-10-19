@@ -2,6 +2,6 @@
 
 set -ex
 
-python -m yapf -r --diff example/*.py
-python -m yapf -r --diff src
-python -m yapf -r --diff test
+python3 -m yapf -r --diff example/*.py
+python3 -m yapf -r --diff src
+python3 -m yapf -r --diff test

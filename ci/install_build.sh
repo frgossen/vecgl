@@ -2,4 +2,4 @@
 
 set -ex
 
-python -m pip install dist/*.whl
+python3 -m pip install dist/*.whl
