@@ -382,11 +382,14 @@ def get_translate_mat4(dx: float, dy: float, dz: float) -> Mat4:
         (0.0, 0.0, 0.0, 1.0),
     )
 
+
 def get_translate_x_mat4(dx: float) -> Mat4:
     return get_translate_mat4(dx, 0.0, 0.0)
 
+
 def get_translate_y_mat4(dy: float) -> Mat4:
-    return get_translate_mat4(0.0, dy,  0.0)
+    return get_translate_mat4(0.0, dy, 0.0)
+
 
 def get_translate_z_mat4(dz: float) -> Mat4:
     return get_translate_mat4(0.0, 0.0, dz)
@@ -481,6 +484,7 @@ def homogenious_vec4_to_vec3(u: Union[Vec3, Vec4]) -> Vec3:
     if uw == 0.0:
         return copysign(inf, ux), copysign(inf, uy), copysign(inf, uz)
     return ux / uw, uy / uw, uz / uw
+
 
 def vec3_to_homogenious_vec4(u: Union[Vec3, Vec4]) -> Vec4:
     if len(u) == 4:
